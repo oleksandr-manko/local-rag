@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Automatic-Module-Name: spring.boot.actuator
+Build-Jdk-Spec: 17
+Built-By: Spring
+Implementation-Title: Spring Boot Actuator
+Implementation-Version: 4.0.0-M1
+

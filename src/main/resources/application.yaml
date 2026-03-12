@@ -1,0 +1,117 @@
+server:
+  port: 8080
+  shutdown: graceful
+
+spring:
+  application:
+    name: rag-openai-api-ollama
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+# Ollama Configuration
+ollama:
+  host: 127.0.0.1
+  port: 11434
+  model-name: llama3.2
+  embedding-model-name: nomic-embed-text
+  vision-model-name: qwen2-vl:8b
+  connection-timeout: 30s
+  read-timeout: 120s
+
+# Qdrant Configuration
+qdrant:
+  host: localhost
+  port: 6334
+  collection-name: documents
+  vector-dimension: 768
+  connection-timeout: 10s
+
+# Redis Configuration
+redis:
+  host: localhost
+  port: 6379
+  connection-timeout: 5s
+  database: 0
+
+# Document Processing Configuration
+documents:
+  input-folder: ./documents
+  supported-extensions:
+    - pdf
+    - jpg
+    - jpeg
+    - png
+    - tiff
+
+# Processing Job Configuration
+processing:
+  schedule: "0 */15 * * * *"  # Every 15 minutes
+  chunk-size: 512
+  chunk-overlap: 50
+  batch-size: 100
+  max-concurrent-files: 5
+  job-timeout: 60s
+
+# RAG Configuration
+rag:
+  top-k-results: 5
+  similarity-threshold: 0.7
+  context-separator: "\n\n---\n\n"
+  prompt-template: |
+    Use the following context to answer the question. If the context doesn't contain relevant information, say so.
+    
+    Context:
+    {context}
+    
+    Question: {question}
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.rag.openai: DEBUG
+    io.qdrant: WARN
+    org.springframework: INFO
+    org.springframework.web: INFO
+    io.lettuce: WARN
+    org.apache.pdfbox: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/rag-application.log
+    max-size: 10MB
+    max-history: 30
+    total-size-cap: 300MB
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+  health:
+    defaults:
+      enabled: true
+
+# OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+  info:
+    title: RAG OpenAI API with Ollama
+    description: Retrieval-Augmented Generation API with OpenAI-compatible endpoints
+    version: 1.0.0
+    contact:
+      name: API Support
+      email: support@example.com
+  show-actuator: false

@@ -1,0 +1,35 @@
+# Ignore build artifacts
+build/
+.gradle/
+bin/
+
+# Ignore IDE files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Ignore version control
+.git/
+.gitignore
+
+# Ignore documentation
+*.md
+docs/
+
+# Ignore test data
+documents/
+logs/
+
+# Ignore Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Ignore Kiro specs
+.kiro/
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
