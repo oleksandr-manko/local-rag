@@ -1,6 +1,6 @@
 package com.rag.openai.api;
 
-import com.rag.openai.config.OllamaConfig;
+import com.rag.openai.config.OpenAIApiConfig;
 import com.rag.openai.domain.dto.*;
 import com.rag.openai.service.QueryHandler;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,8 +14,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
-
-import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -35,23 +33,19 @@ class OpenAIApiControllerTest {
     @Mock
     private QueryHandler queryHandler;
     
-    private OllamaConfig ollamaConfig;
+    private OpenAIApiConfig openAIApiConfig;
     private OpenAIApiController controller;
     
     @BeforeEach
     void setUp() {
-        // Given: Configuration for Ollama
-        ollamaConfig = new OllamaConfig(
-            "localhost",
-            11434,
-            "llama3.2",
-            "nomic-embed-text",
-            "qwen3-vl:8b",
-            Duration.ofSeconds(30),
-            Duration.ofSeconds(120)
+        // Given: Configuration for OpenAI API
+        openAIApiConfig = new OpenAIApiConfig(
+            "local",
+            1773532800L,
+            "host-machine"
         );
         
-        controller = new OpenAIApiController(queryHandler, ollamaConfig);
+        controller = new OpenAIApiController(queryHandler, openAIApiConfig);
     }
     
     @Test
@@ -60,7 +54,7 @@ class OpenAIApiControllerTest {
         // Given: A valid non-streaming chat completion request
         Message userMessage = new Message("user", "What is the capital of France?");
         ChatCompletionRequest request = new ChatCompletionRequest(
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(userMessage),
             false,
             Optional.of(0.7),
@@ -74,7 +68,7 @@ class OpenAIApiControllerTest {
             "chatcmpl-123",
             "chat.completion",
             System.currentTimeMillis() / 1000,
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(choice),
             usage
         );
@@ -93,7 +87,7 @@ class OpenAIApiControllerTest {
         ChatCompletionResponse responseBody = (ChatCompletionResponse) response.getBody();
         assertThat(responseBody).isNotNull();
         assertThat(responseBody.id()).isEqualTo("chatcmpl-123");
-        assertThat(responseBody.model()).isEqualTo("llama3.2");
+        assertThat(responseBody.model()).isEqualTo("gpt-oss:20b");
         assertThat(responseBody.choices()).hasSize(1);
         assertThat(responseBody.choices().get(0).message().content()).isEqualTo("The capital of France is Paris.");
         
@@ -106,7 +100,7 @@ class OpenAIApiControllerTest {
         // Given: A valid streaming chat completion request
         Message userMessage = new Message("user", "Count to three");
         ChatCompletionRequest request = new ChatCompletionRequest(
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(userMessage),
             true,
             Optional.empty(),
@@ -119,7 +113,7 @@ class OpenAIApiControllerTest {
             "chatcmpl-456",
             "chat.completion.chunk",
             System.currentTimeMillis() / 1000,
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(choice1)
         );
         
@@ -129,7 +123,7 @@ class OpenAIApiControllerTest {
             "chatcmpl-456",
             "chat.completion.chunk",
             System.currentTimeMillis() / 1000,
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(choice2)
         );
         
@@ -139,7 +133,7 @@ class OpenAIApiControllerTest {
             "chatcmpl-456",
             "chat.completion.chunk",
             System.currentTimeMillis() / 1000,
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(choice3)
         );
         
@@ -205,7 +199,7 @@ class OpenAIApiControllerTest {
         // We create a minimal valid request and test the controller's validation
         Message userMessage = new Message("user", "Test");
         ChatCompletionRequest validRequest = new ChatCompletionRequest(
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(userMessage),
             false,
             Optional.empty(),
@@ -235,7 +229,7 @@ class OpenAIApiControllerTest {
         try {
             // This should throw IllegalArgumentException during record construction
             new ChatCompletionRequest(
-                "llama3.2",
+                "gpt-oss:20b",
                 List.of(userMessage),
                 false,
                 Optional.of(3.0),  // Invalid: > 2.0
@@ -256,7 +250,7 @@ class OpenAIApiControllerTest {
         // Given: A request with stream=false
         Message userMessage = new Message("user", "Tell me a joke");
         ChatCompletionRequest request = new ChatCompletionRequest(
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(userMessage),
             false,
             Optional.empty(),
@@ -270,7 +264,7 @@ class OpenAIApiControllerTest {
             "chatcmpl-789",
             "chat.completion",
             System.currentTimeMillis() / 1000,
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(choice),
             usage
         );
@@ -295,7 +289,7 @@ class OpenAIApiControllerTest {
         // Given: A request with stream=true
         Message userMessage = new Message("user", "Hello");
         ChatCompletionRequest request = new ChatCompletionRequest(
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(userMessage),
             true,
             Optional.empty(),
@@ -308,7 +302,7 @@ class OpenAIApiControllerTest {
             "chatcmpl-999",
             "chat.completion.chunk",
             System.currentTimeMillis() / 1000,
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(choice)
         );
         
@@ -346,9 +340,9 @@ class OpenAIApiControllerTest {
         assertThat(modelsResponse.data()).hasSize(1);
         
         ModelInfo modelInfo = modelsResponse.data().get(0);
-        assertThat(modelInfo.id()).isEqualTo("llama3.2");
+        assertThat(modelInfo.id()).isEqualTo("local");
         assertThat(modelInfo.object()).isEqualTo("model");
-        assertThat(modelInfo.ownedBy()).isEqualTo("ollama");
+        assertThat(modelInfo.ownedBy()).isEqualTo("host-machine");
         assertThat(modelInfo.created()).isGreaterThan(0);
     }
     
@@ -358,7 +352,7 @@ class OpenAIApiControllerTest {
         // Given: A valid request but query handler throws exception
         Message userMessage = new Message("user", "Test query");
         ChatCompletionRequest request = new ChatCompletionRequest(
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(userMessage),
             false,
             Optional.empty(),
@@ -385,7 +379,7 @@ class OpenAIApiControllerTest {
         // Given: A valid streaming request but query handler throws exception
         Message userMessage = new Message("user", "Test streaming query");
         ChatCompletionRequest request = new ChatCompletionRequest(
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(userMessage),
             true,
             Optional.empty(),

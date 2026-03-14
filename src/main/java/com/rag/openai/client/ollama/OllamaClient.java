@@ -8,45 +8,42 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Client interface for interacting with Ollama server.
  * Provides methods for text generation, streaming, and embedding generation.
+ * Model names are resolved from configuration internally.
  */
 public interface OllamaClient {
     
     /**
-     * Generate text from a prompt using the specified model.
+     * Generate text from a prompt using the configured model.
      * 
      * @param prompt The input prompt
-     * @param modelName The model to use for generation
      * @return CompletableFuture containing the generated text
      */
-    CompletableFuture<String> generate(String prompt, String modelName);
+    CompletableFuture<String> generate(String prompt);
     
     /**
-     * Generate text from a prompt with streaming response.
+     * Generate text from a prompt with streaming response using the configured model.
      * 
      * @param prompt The input prompt
-     * @param modelName The model to use for generation
      * @return CompletableFuture containing a Flux of streaming tokens
      */
-    CompletableFuture<Flux<String>> generateStreaming(String prompt, String modelName);
+    CompletableFuture<Flux<String>> generateStreaming(String prompt);
     
     /**
-     * Generate an embedding vector for the given text.
+     * Generate an embedding vector for the given text using the configured embedding model.
      * 
      * @param text The text to generate an embedding for
-     * @param embeddingModelName The embedding model to use
      * @return CompletableFuture containing the embedding vector
      */
-    CompletableFuture<List<Float>> generateEmbedding(String text, String embeddingModelName);
+    CompletableFuture<List<Float>> generateEmbedding(String text);
     
     /**
-     * Analyze an image using a vision-capable model to extract text.
+     * Analyze an image using the configured vision model to extract text.
      * 
      * @param imageData The image data as a byte array
      * @param prompt The prompt describing what to extract
-     * @param visionModelName The vision model to use
      * @return CompletableFuture containing the extracted text
      */
-    CompletableFuture<String> analyzeImage(byte[] imageData, String prompt, String visionModelName);
+    CompletableFuture<String> analyzeImage(byte[] imageData, String prompt);
     
     /**
      * Verify connectivity to the Ollama server.

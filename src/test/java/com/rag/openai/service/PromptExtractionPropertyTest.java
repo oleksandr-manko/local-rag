@@ -361,7 +361,7 @@ class PromptExtractionPropertyTest {
     @Provide
     Arbitrary<String> modelName() {
         return Arbitraries.of(
-                "llama3.2",
+                "gpt-oss:20b",
                 "llama3.2:1b",
                 "llama3.2:3b",
                 "mistral",

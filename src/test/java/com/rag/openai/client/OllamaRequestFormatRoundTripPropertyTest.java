@@ -7,6 +7,7 @@ import com.rag.openai.client.ollama.*;
 import net.jqwik.api.*;
 import net.jqwik.api.constraints.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -108,13 +109,14 @@ class OllamaRequestFormatRoundTripPropertyTest {
     @Label("When OllamaGenerateResponse is serialized and deserialized Then preserves all fields")
     void ollamaGenerateResponseRoundTrip(
             @ForAll @NotBlank @AlphaChars String model,
-            @ForAll @NotBlank String response,
-            @ForAll boolean done
+            @ForAll @NotBlank String response
     ) throws JsonProcessingException {
         // Feature: rag-openai-api-ollama, Property 5: Ollama Request Format Round Trip
         
         // Given: a valid OllamaGenerateResponse
-        var originalResponse = new OllamaGenerateResponse(model, response, done);
+        var choice = new OllamaGenerateResponse.Choice(response, 0, null, "stop");
+        var usage = new OllamaGenerateResponse.Usage(7, 12, 19);
+        var originalResponse = new OllamaGenerateResponse("cmpl-123", "text_completion", 1715634521L, model, List.of(choice), usage);
         
         // When: serializing to JSON and deserializing back
         String json = objectMapper.writeValueAsString(originalResponse);
@@ -123,28 +125,31 @@ class OllamaRequestFormatRoundTripPropertyTest {
         // Then: all fields are preserved
         assertThat(deserializedResponse.model()).isEqualTo(originalResponse.model());
         assertThat(deserializedResponse.response()).isEqualTo(originalResponse.response());
-        assertThat(deserializedResponse.done()).isEqualTo(originalResponse.done());
+        assertThat(deserializedResponse.choices()).hasSize(1);
+        assertThat(deserializedResponse.choices().getFirst().finish_reason()).isEqualTo("stop");
     }
 
     @Property(tries = 100)
     @Label("When OllamaGenerateResponse is serialized Then JSON contains all fields")
     void ollamaGenerateResponseSerializationContainsAllFields(
             @ForAll @NotBlank @AlphaChars String model,
-            @ForAll @NotBlank String response,
-            @ForAll boolean done
+            @ForAll @NotBlank String response
     ) throws JsonProcessingException {
         // Feature: rag-openai-api-ollama, Property 5: Ollama Request Format Round Trip
         
         // Given: a valid response
-        var ollamaResponse = new OllamaGenerateResponse(model, response, done);
+        var choice = new OllamaGenerateResponse.Choice(response, 0, null, "stop");
+        var usage = new OllamaGenerateResponse.Usage(7, 12, 19);
+        var ollamaResponse = new OllamaGenerateResponse("cmpl-123", "text_completion", 1715634521L, model, List.of(choice), usage);
         
         // When: serializing to JSON
         String json = objectMapper.writeValueAsString(ollamaResponse);
         
         // Then: JSON contains all expected fields
         assertThat(json).contains("\"model\"");
-        assertThat(json).contains("\"response\"");
-        assertThat(json).contains("\"done\"");
+        assertThat(json).contains("\"choices\"");
+        assertThat(json).contains("\"usage\"");
+        assertThat(json).contains("\"finish_reason\"");
     }
 
     // ==================== OllamaEmbeddingRequest Round Trip Tests ====================
@@ -158,7 +163,7 @@ class OllamaRequestFormatRoundTripPropertyTest {
         // Feature: rag-openai-api-ollama, Property 5: Ollama Request Format Round Trip
         
         // Given: a valid OllamaEmbeddingRequest
-        var originalRequest = new OllamaEmbeddingRequest(model, prompt);
+        var originalRequest = new OllamaEmbeddingRequest(prompt, model, "float");
         
         // When: serializing to JSON and deserializing back
         String json = objectMapper.writeValueAsString(originalRequest);
@@ -166,7 +171,8 @@ class OllamaRequestFormatRoundTripPropertyTest {
         
         // Then: all fields are preserved
         assertThat(deserializedRequest.model()).isEqualTo(originalRequest.model());
-        assertThat(deserializedRequest.prompt()).isEqualTo(originalRequest.prompt());
+        assertThat(deserializedRequest.input()).isEqualTo(originalRequest.input());
+        assertThat(deserializedRequest.encoding_format()).isEqualTo("float");
     }
 
     @Property(tries = 100)
@@ -178,14 +184,15 @@ class OllamaRequestFormatRoundTripPropertyTest {
         // Feature: rag-openai-api-ollama, Property 5: Ollama Request Format Round Trip
         
         // Given: a valid request
-        var request = new OllamaEmbeddingRequest(model, prompt);
+        var request = new OllamaEmbeddingRequest(prompt, model, "float");
         
         // When: serializing to JSON
         String json = objectMapper.writeValueAsString(request);
         
         // Then: JSON contains all expected fields
         assertThat(json).contains("\"model\"");
-        assertThat(json).contains("\"prompt\"");
+        assertThat(json).contains("\"input\"");
+        assertThat(json).contains("\"encoding_format\"");
     }
 
     // ==================== OllamaEmbeddingResponse Round Trip Tests ====================
@@ -198,15 +205,17 @@ class OllamaRequestFormatRoundTripPropertyTest {
         // Feature: rag-openai-api-ollama, Property 5: Ollama Request Format Round Trip
         
         // Given: a valid OllamaEmbeddingResponse
-        var originalResponse = new OllamaEmbeddingResponse(embedding);
+        var embeddingData = new OllamaEmbeddingResponse.EmbeddingData("embedding", 0, embedding);
+        var usage = new OllamaEmbeddingResponse.Usage(8, 8);
+        var originalResponse = new OllamaEmbeddingResponse("list", List.of(embeddingData), "nomic-embed-text", usage);
         
         // When: serializing to JSON and deserializing back
         String json = objectMapper.writeValueAsString(originalResponse);
         var deserializedResponse = objectMapper.readValue(json, OllamaEmbeddingResponse.class);
         
         // Then: embedding is preserved
-        assertThat(deserializedResponse.embedding()).isEqualTo(originalResponse.embedding());
-        assertThat(deserializedResponse.embedding()).hasSize(embedding.size());
+        assertThat(deserializedResponse.data().getFirst().embedding()).isEqualTo(embedding);
+        assertThat(deserializedResponse.data().getFirst().embedding()).hasSize(embedding.size());
     }
 
     @Property(tries = 100)
@@ -217,7 +226,9 @@ class OllamaRequestFormatRoundTripPropertyTest {
         // Feature: rag-openai-api-ollama, Property 5: Ollama Request Format Round Trip
         
         // Given: a valid response
-        var response = new OllamaEmbeddingResponse(embedding);
+        var embeddingData = new OllamaEmbeddingResponse.EmbeddingData("embedding", 0, embedding);
+        var usage = new OllamaEmbeddingResponse.Usage(8, 8);
+        var response = new OllamaEmbeddingResponse("list", List.of(embeddingData), "nomic-embed-text", usage);
         
         // When: serializing to JSON
         String json = objectMapper.writeValueAsString(response);
@@ -299,15 +310,17 @@ class OllamaRequestFormatRoundTripPropertyTest {
         
         // Given: response with single embedding value
         var embedding = List.of(0.5f);
-        var response = new OllamaEmbeddingResponse(embedding);
+        var embeddingData = new OllamaEmbeddingResponse.EmbeddingData("embedding", 0, embedding);
+        var usage = new OllamaEmbeddingResponse.Usage(8, 8);
+        var response = new OllamaEmbeddingResponse("list", List.of(embeddingData), "nomic-embed-text", usage);
         
         // When: serializing and deserializing
         String json = objectMapper.writeValueAsString(response);
         var deserialized = objectMapper.readValue(json, OllamaEmbeddingResponse.class);
         
         // Then: single element is preserved
-        assertThat(deserialized.embedding()).hasSize(1);
-        assertThat(deserialized.embedding().get(0)).isEqualTo(0.5f);
+        assertThat(deserialized.data()).hasSize(1);
+        assertThat(deserialized.data().getFirst().embedding().getFirst()).isEqualTo(0.5f);
     }
 
     // ==================== Arbitraries (Generators) ====================

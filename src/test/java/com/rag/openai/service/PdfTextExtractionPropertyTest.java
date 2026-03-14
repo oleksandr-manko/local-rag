@@ -4,7 +4,6 @@ import com.rag.openai.client.ollama.OllamaClient;
 import com.rag.openai.client.qdrant.VectorStoreClient;
 import com.rag.openai.client.redis.RedisClient;
 import com.rag.openai.config.DocumentsConfig;
-import com.rag.openai.config.OllamaConfig;
 import com.rag.openai.config.ProcessingConfig;
 import net.jqwik.api.*;
 import net.jqwik.api.constraints.*;
@@ -399,15 +398,6 @@ class PdfTextExtractionPropertyTest {
                         100,
                         5,
                         Duration.ofSeconds(60)
-                ),
-                new OllamaConfig(
-                        "localhost",
-                        11434,
-                        "llama3.2",
-                        "nomic-embed-text",
-                        "qwen2-vl:8b",
-                        Duration.ofSeconds(30),
-                        Duration.ofSeconds(120)
                 )
         );
     }

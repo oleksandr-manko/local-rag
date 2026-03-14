@@ -1,6 +1,6 @@
 package com.rag.openai.api;
 
-import com.rag.openai.config.OllamaConfig;
+import com.rag.openai.config.OpenAIApiConfig;
 import com.rag.openai.domain.dto.ChatCompletionRequest;
 import com.rag.openai.domain.dto.ChatCompletionResponse;
 import com.rag.openai.domain.dto.Choice;
@@ -11,7 +11,6 @@ import net.jqwik.api.*;
 import net.jqwik.api.constraints.*;
 import org.springframework.http.ResponseEntity;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -49,11 +48,11 @@ class RagPipelineEquivalencePropertyTest {
         QueryHandler mockQueryHandler = mock(QueryHandler.class);
         
         // Given: mock OllamaConfig for OpenAI controller
-        OllamaConfig mockOllamaConfig = createMockOllamaConfig();
+        OpenAIApiConfig mockOpenAIApiConfig = createMockOpenAIApiConfig();
         
         // Given: both controllers using the same QueryHandler
         TestApiController testController = new TestApiController(mockQueryHandler);
-        OpenAIApiController openAIController = new OpenAIApiController(mockQueryHandler, mockOllamaConfig);
+        OpenAIApiController openAIController = new OpenAIApiController(mockQueryHandler, mockOpenAIApiConfig);
         
         // Given: QueryHandler returns a successful response
         ChatCompletionResponse mockResponse = createMockResponse("Test response");
@@ -82,11 +81,11 @@ class RagPipelineEquivalencePropertyTest {
         QueryHandler mockQueryHandler = mock(QueryHandler.class);
         
         // Given: mock OllamaConfig for OpenAI controller
-        OllamaConfig mockOllamaConfig = createMockOllamaConfig();
+        OpenAIApiConfig mockOpenAIApiConfig = createMockOpenAIApiConfig();
         
         // Given: both controllers using the same QueryHandler
         TestApiController testController = new TestApiController(mockQueryHandler);
-        OpenAIApiController openAIController = new OpenAIApiController(mockQueryHandler, mockOllamaConfig);
+        OpenAIApiController openAIController = new OpenAIApiController(mockQueryHandler, mockOpenAIApiConfig);
         
         // Given: QueryHandler returns a successful response
         ChatCompletionResponse mockResponse = createMockResponse("Test response");
@@ -125,8 +124,8 @@ class RagPipelineEquivalencePropertyTest {
         
         // Given: both controllers using the same QueryHandler
         TestApiController testController = new TestApiController(mockQueryHandler);
-        OllamaConfig mockOllamaConfig = createMockOllamaConfig();
-        OpenAIApiController openAIController = new OpenAIApiController(mockQueryHandler, mockOllamaConfig);
+        OpenAIApiConfig mockOpenAIApiConfig = createMockOpenAIApiConfig();
+        OpenAIApiController openAIController = new OpenAIApiController(mockQueryHandler, mockOpenAIApiConfig);
         
         // Given: QueryHandler returns a successful response
         ChatCompletionResponse mockResponse = createMockResponse("Test response");
@@ -170,8 +169,8 @@ class RagPipelineEquivalencePropertyTest {
         
         // Given: both controllers using the same QueryHandler
         TestApiController testController = new TestApiController(mockQueryHandler);
-        OllamaConfig mockOllamaConfig = createMockOllamaConfig();
-        OpenAIApiController openAIController = new OpenAIApiController(mockQueryHandler, mockOllamaConfig);
+        OpenAIApiConfig mockOpenAIApiConfig = createMockOpenAIApiConfig();
+        OpenAIApiController openAIController = new OpenAIApiController(mockQueryHandler, mockOpenAIApiConfig);
         
         // Given: QueryHandler returns a specific response
         ChatCompletionResponse mockResponse = createMockResponse(expectedResponse);
@@ -213,8 +212,8 @@ class RagPipelineEquivalencePropertyTest {
         
         // Given: both controllers using the same QueryHandler
         TestApiController testController = new TestApiController(mockQueryHandler);
-        OllamaConfig mockOllamaConfig = createMockOllamaConfig();
-        OpenAIApiController openAIController = new OpenAIApiController(mockQueryHandler, mockOllamaConfig);
+        OpenAIApiConfig mockOpenAIApiConfig = createMockOpenAIApiConfig();
+        OpenAIApiController openAIController = new OpenAIApiController(mockQueryHandler, mockOpenAIApiConfig);
         
         // Given: QueryHandler returns a successful response
         ChatCompletionResponse mockResponse = createMockResponse("Response");
@@ -253,8 +252,8 @@ class RagPipelineEquivalencePropertyTest {
         
         // Given: both controllers using the same QueryHandler
         TestApiController testController = new TestApiController(mockQueryHandler);
-        OllamaConfig mockOllamaConfig = createMockOllamaConfig();
-        OpenAIApiController openAIController = new OpenAIApiController(mockQueryHandler, mockOllamaConfig);
+        OpenAIApiConfig mockOpenAIApiConfig = createMockOpenAIApiConfig();
+        OpenAIApiController openAIController = new OpenAIApiController(mockQueryHandler, mockOpenAIApiConfig);
         
         // Given: QueryHandler returns a successful response
         ChatCompletionResponse mockResponse = createMockResponse("Response");
@@ -290,8 +289,8 @@ class RagPipelineEquivalencePropertyTest {
         
         // Given: both controllers using the same QueryHandler
         TestApiController testController = new TestApiController(mockQueryHandler);
-        OllamaConfig mockOllamaConfig = createMockOllamaConfig();
-        OpenAIApiController openAIController = new OpenAIApiController(mockQueryHandler, mockOllamaConfig);
+        OpenAIApiConfig mockOpenAIApiConfig = createMockOpenAIApiConfig();
+        OpenAIApiController openAIController = new OpenAIApiController(mockQueryHandler, mockOpenAIApiConfig);
         
         // Given: QueryHandler returns a successful response
         ChatCompletionResponse mockResponse = createMockResponse("Response");
@@ -334,8 +333,8 @@ class RagPipelineEquivalencePropertyTest {
         
         // Given: both controllers using the same QueryHandler
         TestApiController testController = new TestApiController(mockQueryHandler);
-        OllamaConfig mockOllamaConfig = createMockOllamaConfig();
-        OpenAIApiController openAIController = new OpenAIApiController(mockQueryHandler, mockOllamaConfig);
+        OpenAIApiConfig mockOpenAIApiConfig = createMockOpenAIApiConfig();
+        OpenAIApiController openAIController = new OpenAIApiController(mockQueryHandler, mockOpenAIApiConfig);
         
         // When: processing through test endpoint
         ResponseEntity<String> testResponse = testController.testQuery(prompt).join();
@@ -387,17 +386,13 @@ class RagPipelineEquivalencePropertyTest {
     }
     
     /**
-     * Create a mock OllamaConfig for testing.
+     * Create a mock OpenAIApiConfig for testing.
      */
-    private OllamaConfig createMockOllamaConfig() {
-        return new OllamaConfig(
-                "localhost",
-                11434,
-                "llama3.2",
-                "nomic-embed-text",
-                "qwen3-vl:8b",
-                Duration.ofSeconds(30),
-                Duration.ofSeconds(120)
+    private OpenAIApiConfig createMockOpenAIApiConfig() {
+        return new OpenAIApiConfig(
+                "local",
+                1773532800L,
+                "host-machine"
         );
     }
 }

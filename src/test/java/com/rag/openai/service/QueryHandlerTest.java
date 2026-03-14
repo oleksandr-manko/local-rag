@@ -2,7 +2,7 @@ package com.rag.openai.service;
 
 import com.rag.openai.client.ollama.OllamaClient;
 import com.rag.openai.client.qdrant.VectorStoreClient;
-import com.rag.openai.config.OllamaConfig;
+
 import com.rag.openai.config.RagConfig;
 import com.rag.openai.domain.dto.*;
 import com.rag.openai.domain.model.DocumentMetadata;
@@ -17,7 +17,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Flux;
 
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -41,22 +40,13 @@ class QueryHandlerTest {
     @Mock
     private VectorStoreClient vectorStoreClient;
     
-    private OllamaConfig ollamaConfig;
+    
     private RagConfig ragConfig;
     private QueryHandler queryHandler;
     
     @BeforeEach
     void setUp() {
         // Given: Configuration for Ollama and RAG
-        ollamaConfig = new OllamaConfig(
-            "localhost",
-            11434,
-            "llama3.2",
-            "nomic-embed-text",
-            "qwen3-vl:8b",
-            Duration.ofSeconds(30),
-            Duration.ofSeconds(120)
-        );
         
         ragConfig = new RagConfig(
             5,
@@ -68,7 +58,6 @@ class QueryHandlerTest {
         queryHandler = new QueryHandlerImpl(
             ollamaClient,
             vectorStoreClient,
-            ollamaConfig,
             ragConfig
         );
     }
@@ -83,7 +72,7 @@ class QueryHandlerTest {
         Message userMessage2 = new Message("user", "What is the weather today?");
         
         ChatCompletionRequest request = new ChatCompletionRequest(
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(systemMessage, userMessage1, assistantMessage, userMessage2),
             false,
             Optional.empty(),
@@ -93,18 +82,18 @@ class QueryHandlerTest {
         List<Float> mockEmbedding = List.of(0.1f, 0.2f, 0.3f);
         List<ScoredChunk> mockChunks = List.of();
         
-        when(ollamaClient.generateEmbedding(anyString(), anyString()))
+        when(ollamaClient.generateEmbedding(anyString()))
             .thenReturn(CompletableFuture.completedFuture(mockEmbedding));
         when(vectorStoreClient.searchSimilar(anyList(), anyInt()))
             .thenReturn(CompletableFuture.completedFuture(mockChunks));
-        when(ollamaClient.generate(anyString(), anyString()))
+        when(ollamaClient.generate(anyString()))
             .thenReturn(CompletableFuture.completedFuture("The weather is sunny."));
         
         // When: Handle the query
         ChatCompletionResponse response = queryHandler.handleQuery(request).join();
         
         // Then: The last user message should be extracted and used
-        verify(ollamaClient).generateEmbedding(eq("What is the weather today?"), eq("nomic-embed-text"));
+        verify(ollamaClient).generateEmbedding(eq("What is the weather today?"));
         assertThat(response).isNotNull();
         assertThat(response.choices()).hasSize(1);
         assertThat(response.choices().get(0).message().content()).isEqualTo("The weather is sunny.");
@@ -118,7 +107,7 @@ class QueryHandlerTest {
         Message assistantMessage = new Message("assistant", "Hello!");
         
         ChatCompletionRequest request = new ChatCompletionRequest(
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(systemMessage, assistantMessage),
             false,
             Optional.empty(),
@@ -138,7 +127,7 @@ class QueryHandlerTest {
         // Given: A request with user message and relevant chunks
         Message userMessage = new Message("user", "What is RAG?");
         ChatCompletionRequest request = new ChatCompletionRequest(
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(userMessage),
             false,
             Optional.empty(),
@@ -156,11 +145,11 @@ class QueryHandlerTest {
         List<Float> mockEmbedding = List.of(0.1f, 0.2f, 0.3f);
         List<ScoredChunk> mockChunks = List.of(scoredChunk1, scoredChunk2);
         
-        when(ollamaClient.generateEmbedding(anyString(), anyString()))
+        when(ollamaClient.generateEmbedding(anyString()))
             .thenReturn(CompletableFuture.completedFuture(mockEmbedding));
         when(vectorStoreClient.searchSimilar(anyList(), anyInt()))
             .thenReturn(CompletableFuture.completedFuture(mockChunks));
-        when(ollamaClient.generate(anyString(), anyString()))
+        when(ollamaClient.generate(anyString()))
             .thenReturn(CompletableFuture.completedFuture("RAG is a technique that enhances generation with retrieval."));
         
         // When: Handle the query
@@ -172,8 +161,7 @@ class QueryHandlerTest {
                 prompt.contains("RAG stands for Retrieval-Augmented Generation.") &&
                 prompt.contains("RAG combines retrieval and generation for better responses.") &&
                 prompt.contains("What is RAG?")
-            ),
-            eq("llama3.2")
+            )
         );
         assertThat(response).isNotNull();
         assertThat(response.choices().get(0).message().content())
@@ -186,7 +174,7 @@ class QueryHandlerTest {
         // Given: A request with user message but no relevant chunks
         Message userMessage = new Message("user", "What is the meaning of life?");
         ChatCompletionRequest request = new ChatCompletionRequest(
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(userMessage),
             false,
             Optional.empty(),
@@ -196,18 +184,18 @@ class QueryHandlerTest {
         List<Float> mockEmbedding = List.of(0.1f, 0.2f, 0.3f);
         List<ScoredChunk> emptyChunks = List.of();
         
-        when(ollamaClient.generateEmbedding(anyString(), anyString()))
+        when(ollamaClient.generateEmbedding(anyString()))
             .thenReturn(CompletableFuture.completedFuture(mockEmbedding));
         when(vectorStoreClient.searchSimilar(anyList(), anyInt()))
             .thenReturn(CompletableFuture.completedFuture(emptyChunks));
-        when(ollamaClient.generate(anyString(), anyString()))
+        when(ollamaClient.generate(anyString()))
             .thenReturn(CompletableFuture.completedFuture("The meaning of life is subjective."));
         
         // When: Handle the query
         ChatCompletionResponse response = queryHandler.handleQuery(request).join();
         
         // Then: The original prompt should be used without augmentation
-        verify(ollamaClient).generate(eq("What is the meaning of life?"), eq("llama3.2"));
+        verify(ollamaClient).generate(eq("What is the meaning of life?"));
         assertThat(response).isNotNull();
         assertThat(response.choices().get(0).message().content())
             .isEqualTo("The meaning of life is subjective.");
@@ -220,7 +208,7 @@ class QueryHandlerTest {
         // Given: A request with chunks that don't meet the similarity threshold
         Message userMessage = new Message("user", "Tell me about quantum physics");
         ChatCompletionRequest request = new ChatCompletionRequest(
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(userMessage),
             false,
             Optional.empty(),
@@ -234,18 +222,18 @@ class QueryHandlerTest {
         List<Float> mockEmbedding = List.of(0.1f, 0.2f, 0.3f);
         List<ScoredChunk> lowScoreChunks = List.of(scoredChunk);
         
-        when(ollamaClient.generateEmbedding(anyString(), anyString()))
+        when(ollamaClient.generateEmbedding(anyString()))
             .thenReturn(CompletableFuture.completedFuture(mockEmbedding));
         when(vectorStoreClient.searchSimilar(anyList(), anyInt()))
             .thenReturn(CompletableFuture.completedFuture(lowScoreChunks));
-        when(ollamaClient.generate(anyString(), anyString()))
+        when(ollamaClient.generate(anyString()))
             .thenReturn(CompletableFuture.completedFuture("Quantum physics studies subatomic particles."));
         
         // When: Handle the query
         ChatCompletionResponse response = queryHandler.handleQuery(request).join();
         
         // Then: The original prompt should be used (chunks filtered out by threshold)
-        verify(ollamaClient).generate(eq("Tell me about quantum physics"), eq("llama3.2"));
+        verify(ollamaClient).generate(eq("Tell me about quantum physics"));
         assertThat(response).isNotNull();
         assertThat(response.choices().get(0).message().content())
             .isEqualTo("Quantum physics studies subatomic particles.");
@@ -257,7 +245,7 @@ class QueryHandlerTest {
         // Given: A request that will generate a response
         Message userMessage = new Message("user", "Hello");
         ChatCompletionRequest request = new ChatCompletionRequest(
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(userMessage),
             false,
             Optional.empty(),
@@ -268,11 +256,11 @@ class QueryHandlerTest {
         List<ScoredChunk> emptyChunks = List.of();
         String generatedText = "Hello! How can I help you today?";
         
-        when(ollamaClient.generateEmbedding(anyString(), anyString()))
+        when(ollamaClient.generateEmbedding(anyString()))
             .thenReturn(CompletableFuture.completedFuture(mockEmbedding));
         when(vectorStoreClient.searchSimilar(anyList(), anyInt()))
             .thenReturn(CompletableFuture.completedFuture(emptyChunks));
-        when(ollamaClient.generate(anyString(), anyString()))
+        when(ollamaClient.generate(anyString()))
             .thenReturn(CompletableFuture.completedFuture(generatedText));
         
         // When: Handle the query
@@ -283,7 +271,7 @@ class QueryHandlerTest {
         assertThat(response.id()).startsWith("chatcmpl-");
         assertThat(response.object()).isEqualTo("chat.completion");
         assertThat(response.created()).isGreaterThan(0);
-        assertThat(response.model()).isEqualTo("llama3.2");
+        assertThat(response.model()).isEqualTo("gpt-oss:20b");
         
         assertThat(response.choices()).hasSize(1);
         Choice choice = response.choices().get(0);
@@ -305,7 +293,7 @@ class QueryHandlerTest {
         // Given: A request with multiple relevant chunks
         Message userMessage = new Message("user", "Explain machine learning");
         ChatCompletionRequest request = new ChatCompletionRequest(
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(userMessage),
             false,
             Optional.empty(),
@@ -327,11 +315,11 @@ class QueryHandlerTest {
         List<Float> mockEmbedding = List.of(0.1f, 0.2f, 0.3f);
         List<ScoredChunk> mockChunks = List.of(scoredChunk1, scoredChunk2, scoredChunk3);
         
-        when(ollamaClient.generateEmbedding(anyString(), anyString()))
+        when(ollamaClient.generateEmbedding(anyString()))
             .thenReturn(CompletableFuture.completedFuture(mockEmbedding));
         when(vectorStoreClient.searchSimilar(anyList(), anyInt()))
             .thenReturn(CompletableFuture.completedFuture(mockChunks));
-        when(ollamaClient.generate(anyString(), anyString()))
+        when(ollamaClient.generate(anyString()))
             .thenReturn(CompletableFuture.completedFuture("Machine learning enables computers to learn."));
         
         // When: Handle the query
@@ -344,8 +332,7 @@ class QueryHandlerTest {
                 prompt.contains("\n\n---\n\n") &&
                 prompt.contains("It uses algorithms to learn from data.") &&
                 prompt.contains("Common types include supervised and unsupervised learning.")
-            ),
-            eq("llama3.2")
+            )
         );
         assertThat(response).isNotNull();
     }
@@ -356,7 +343,7 @@ class QueryHandlerTest {
         // Given: A streaming request
         Message userMessage = new Message("user", "Count to three");
         ChatCompletionRequest request = new ChatCompletionRequest(
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(userMessage),
             true,
             Optional.empty(),
@@ -367,11 +354,11 @@ class QueryHandlerTest {
         List<ScoredChunk> emptyChunks = List.of();
         Flux<String> tokenFlux = Flux.just("One", ", ", "two", ", ", "three", ".");
         
-        when(ollamaClient.generateEmbedding(anyString(), anyString()))
+        when(ollamaClient.generateEmbedding(anyString()))
             .thenReturn(CompletableFuture.completedFuture(mockEmbedding));
         when(vectorStoreClient.searchSimilar(anyList(), anyInt()))
             .thenReturn(CompletableFuture.completedFuture(emptyChunks));
-        when(ollamaClient.generateStreaming(anyString(), anyString()))
+        when(ollamaClient.generateStreaming(anyString()))
             .thenReturn(CompletableFuture.completedFuture(tokenFlux));
         
         // When: Handle the streaming query
@@ -386,7 +373,7 @@ class QueryHandlerTest {
         ChatCompletionChunk firstChunk = chunks.get(0);
         assertThat(firstChunk.id()).startsWith("chatcmpl-");
         assertThat(firstChunk.object()).isEqualTo("chat.completion.chunk");
-        assertThat(firstChunk.model()).isEqualTo("llama3.2");
+        assertThat(firstChunk.model()).isEqualTo("gpt-oss:20b");
         assertThat(firstChunk.choices()).hasSize(1);
         assertThat(firstChunk.choices().get(0).delta().role()).isPresent();
         assertThat(firstChunk.choices().get(0).delta().role().get()).isEqualTo("assistant");
@@ -412,7 +399,7 @@ class QueryHandlerTest {
         // Given: A request that generates an empty response
         Message userMessage = new Message("user", "Test");
         ChatCompletionRequest request = new ChatCompletionRequest(
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(userMessage),
             false,
             Optional.empty(),
@@ -422,11 +409,11 @@ class QueryHandlerTest {
         List<Float> mockEmbedding = List.of(0.1f, 0.2f, 0.3f);
         List<ScoredChunk> emptyChunks = List.of();
         
-        when(ollamaClient.generateEmbedding(anyString(), anyString()))
+        when(ollamaClient.generateEmbedding(anyString()))
             .thenReturn(CompletableFuture.completedFuture(mockEmbedding));
         when(vectorStoreClient.searchSimilar(anyList(), anyInt()))
             .thenReturn(CompletableFuture.completedFuture(emptyChunks));
-        when(ollamaClient.generate(anyString(), anyString()))
+        when(ollamaClient.generate(anyString()))
             .thenReturn(CompletableFuture.completedFuture(""));
         
         // When: Handle the query
@@ -446,7 +433,7 @@ class QueryHandlerTest {
         // Given: A streaming request with multiple tokens
         Message userMessage = new Message("user", "Write a haiku");
         ChatCompletionRequest request = new ChatCompletionRequest(
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(userMessage),
             true,
             Optional.empty(),
@@ -457,11 +444,11 @@ class QueryHandlerTest {
         List<ScoredChunk> emptyChunks = List.of();
         Flux<String> tokenFlux = Flux.just("Cherry", " blossoms", " fall", "\n", "Softly", " on", " the", " ground", "\n", "Spring", "'s", " gentle", " whisper");
         
-        when(ollamaClient.generateEmbedding(anyString(), anyString()))
+        when(ollamaClient.generateEmbedding(anyString()))
             .thenReturn(CompletableFuture.completedFuture(mockEmbedding));
         when(vectorStoreClient.searchSimilar(anyList(), anyInt()))
             .thenReturn(CompletableFuture.completedFuture(emptyChunks));
-        when(ollamaClient.generateStreaming(anyString(), anyString()))
+        when(ollamaClient.generateStreaming(anyString()))
             .thenReturn(CompletableFuture.completedFuture(tokenFlux));
         
         // When: Handle the streaming query
@@ -493,7 +480,7 @@ class QueryHandlerTest {
         // Given: A streaming request
         Message userMessage = new Message("user", "Say hello");
         ChatCompletionRequest request = new ChatCompletionRequest(
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(userMessage),
             true,
             Optional.empty(),
@@ -504,11 +491,11 @@ class QueryHandlerTest {
         List<ScoredChunk> emptyChunks = List.of();
         Flux<String> tokenFlux = Flux.just("Hello", "!", " How", " are", " you", "?");
         
-        when(ollamaClient.generateEmbedding(anyString(), anyString()))
+        when(ollamaClient.generateEmbedding(anyString()))
             .thenReturn(CompletableFuture.completedFuture(mockEmbedding));
         when(vectorStoreClient.searchSimilar(anyList(), anyInt()))
             .thenReturn(CompletableFuture.completedFuture(emptyChunks));
-        when(ollamaClient.generateStreaming(anyString(), anyString()))
+        when(ollamaClient.generateStreaming(anyString()))
             .thenReturn(CompletableFuture.completedFuture(tokenFlux));
         
         // When: Handle the streaming query
@@ -537,7 +524,7 @@ class QueryHandlerTest {
         // Given: A streaming request that will fail
         Message userMessage = new Message("user", "Test error");
         ChatCompletionRequest request = new ChatCompletionRequest(
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(userMessage),
             true,
             Optional.empty(),
@@ -549,11 +536,11 @@ class QueryHandlerTest {
         RuntimeException streamingError = new RuntimeException("Streaming connection lost");
         Flux<String> errorFlux = Flux.error(streamingError);
         
-        when(ollamaClient.generateEmbedding(anyString(), anyString()))
+        when(ollamaClient.generateEmbedding(anyString()))
             .thenReturn(CompletableFuture.completedFuture(mockEmbedding));
         when(vectorStoreClient.searchSimilar(anyList(), anyInt()))
             .thenReturn(CompletableFuture.completedFuture(emptyChunks));
-        when(ollamaClient.generateStreaming(anyString(), anyString()))
+        when(ollamaClient.generateStreaming(anyString()))
             .thenReturn(CompletableFuture.completedFuture(errorFlux));
         
         // When: Handle the streaming query
@@ -571,7 +558,7 @@ class QueryHandlerTest {
         // Given: A streaming request with a single token
         Message userMessage = new Message("user", "Say yes");
         ChatCompletionRequest request = new ChatCompletionRequest(
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(userMessage),
             true,
             Optional.empty(),
@@ -582,11 +569,11 @@ class QueryHandlerTest {
         List<ScoredChunk> emptyChunks = List.of();
         Flux<String> tokenFlux = Flux.just("Yes");
         
-        when(ollamaClient.generateEmbedding(anyString(), anyString()))
+        when(ollamaClient.generateEmbedding(anyString()))
             .thenReturn(CompletableFuture.completedFuture(mockEmbedding));
         when(vectorStoreClient.searchSimilar(anyList(), anyInt()))
             .thenReturn(CompletableFuture.completedFuture(emptyChunks));
-        when(ollamaClient.generateStreaming(anyString(), anyString()))
+        when(ollamaClient.generateStreaming(anyString()))
             .thenReturn(CompletableFuture.completedFuture(tokenFlux));
         
         // When: Handle the streaming query
@@ -614,7 +601,7 @@ class QueryHandlerTest {
         // Given: A streaming request with no tokens
         Message userMessage = new Message("user", "Empty response");
         ChatCompletionRequest request = new ChatCompletionRequest(
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(userMessage),
             true,
             Optional.empty(),
@@ -625,11 +612,11 @@ class QueryHandlerTest {
         List<ScoredChunk> emptyChunks = List.of();
         Flux<String> emptyFlux = Flux.empty();
         
-        when(ollamaClient.generateEmbedding(anyString(), anyString()))
+        when(ollamaClient.generateEmbedding(anyString()))
             .thenReturn(CompletableFuture.completedFuture(mockEmbedding));
         when(vectorStoreClient.searchSimilar(anyList(), anyInt()))
             .thenReturn(CompletableFuture.completedFuture(emptyChunks));
-        when(ollamaClient.generateStreaming(anyString(), anyString()))
+        when(ollamaClient.generateStreaming(anyString()))
             .thenReturn(CompletableFuture.completedFuture(emptyFlux));
         
         // When: Handle the streaming query
@@ -652,7 +639,7 @@ class QueryHandlerTest {
         // Given: A streaming request with relevant context
         Message userMessage = new Message("user", "What is the capital?");
         ChatCompletionRequest request = new ChatCompletionRequest(
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(userMessage),
             true,
             Optional.empty(),
@@ -667,11 +654,11 @@ class QueryHandlerTest {
         List<ScoredChunk> mockChunks = List.of(scoredChunk);
         Flux<String> tokenFlux = Flux.just("The", " capital", " is", " Paris", ".");
         
-        when(ollamaClient.generateEmbedding(anyString(), anyString()))
+        when(ollamaClient.generateEmbedding(anyString()))
             .thenReturn(CompletableFuture.completedFuture(mockEmbedding));
         when(vectorStoreClient.searchSimilar(anyList(), anyInt()))
             .thenReturn(CompletableFuture.completedFuture(mockChunks));
-        when(ollamaClient.generateStreaming(anyString(), anyString()))
+        when(ollamaClient.generateStreaming(anyString()))
             .thenReturn(CompletableFuture.completedFuture(tokenFlux));
         
         // When: Handle the streaming query
@@ -683,8 +670,7 @@ class QueryHandlerTest {
             argThat(prompt -> 
                 prompt.contains("The capital of France is Paris.") &&
                 prompt.contains("What is the capital?")
-            ),
-            eq("llama3.2")
+            )
         );
         
         assertThat(chunks).isNotNull();
@@ -705,7 +691,7 @@ class QueryHandlerTest {
         );
         
         RuntimeException embeddingError = new RuntimeException("Embedding service unavailable");
-        when(ollamaClient.generateEmbedding(anyString(), anyString()))
+        when(ollamaClient.generateEmbedding(anyString()))
             .thenReturn(CompletableFuture.failedFuture(embeddingError));
         
         // When & Then: Error should be propagated

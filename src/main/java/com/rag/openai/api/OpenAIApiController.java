@@ -1,6 +1,6 @@
 package com.rag.openai.api;
 
-import com.rag.openai.config.OllamaConfig;
+import com.rag.openai.config.OpenAIApiConfig;
 import com.rag.openai.domain.dto.ChatCompletionChunk;
 import com.rag.openai.domain.dto.ChatCompletionRequest;
 import com.rag.openai.domain.dto.ModelInfo;
@@ -28,11 +28,11 @@ public class OpenAIApiController {
     private static final Logger logger = LoggerFactory.getLogger(OpenAIApiController.class);
     
     private final QueryHandler queryHandler;
-    private final OllamaConfig ollamaConfig;
+    private final OpenAIApiConfig openAIApiConfig;
     
-    public OpenAIApiController(QueryHandler queryHandler, OllamaConfig ollamaConfig) {
+    public OpenAIApiController(QueryHandler queryHandler, OpenAIApiConfig openAIApiConfig) {
         this.queryHandler = queryHandler;
-        this.ollamaConfig = ollamaConfig;
+        this.openAIApiConfig = openAIApiConfig;
     }
     
     /**
@@ -153,12 +153,12 @@ public class OpenAIApiController {
         logger.info("Received models list request");
         
         try {
-            // Create model info for the configured Ollama model
+            // Create model info from OpenAI API configuration
             ModelInfo modelInfo = new ModelInfo(
-                ollamaConfig.modelName(),
+                openAIApiConfig.modelName(),
                 "model",
-                System.currentTimeMillis() / 1000,
-                "ollama"
+                openAIApiConfig.creationDate(),
+                openAIApiConfig.ownedBy()
             );
             
             ModelsResponse response = new ModelsResponse(

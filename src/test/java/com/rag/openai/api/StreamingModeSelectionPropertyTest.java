@@ -1,6 +1,6 @@
 package com.rag.openai.api;
 
-import com.rag.openai.config.OllamaConfig;
+import com.rag.openai.config.OpenAIApiConfig;
 import com.rag.openai.domain.dto.*;
 import com.rag.openai.service.QueryHandler;
 import net.jqwik.api.*;
@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -65,10 +64,7 @@ class StreamingModeSelectionPropertyTest {
                 .thenReturn(CompletableFuture.completedFuture(mockChunkFlux));
         
         // Given: controller with mock dependencies
-        OllamaConfig mockConfig = new OllamaConfig(
-                "localhost", 11434, "llama3.2", "nomic-embed-text", "qwen3-vl:8b",
-                Duration.ofSeconds(30), Duration.ofSeconds(120)
-        );
+        OpenAIApiConfig mockConfig = new OpenAIApiConfig("local", 1773532800L, "host-machine");
         OpenAIApiController controller = new OpenAIApiController(mockQueryHandler, mockConfig);
         
         // When: calling chatCompletions endpoint
@@ -120,10 +116,7 @@ class StreamingModeSelectionPropertyTest {
                 .thenReturn(CompletableFuture.completedFuture(mockResponse));
         
         // Given: controller with mock dependencies
-        OllamaConfig mockConfig = new OllamaConfig(
-                "localhost", 11434, "llama3.2", "nomic-embed-text", "qwen3-vl:8b",
-                Duration.ofSeconds(30), Duration.ofSeconds(120)
-        );
+        OpenAIApiConfig mockConfig = new OpenAIApiConfig("local", 1773532800L, "host-machine");
         OpenAIApiController controller = new OpenAIApiController(mockQueryHandler, mockConfig);
         
         // When: calling chatCompletions endpoint
@@ -187,10 +180,7 @@ class StreamingModeSelectionPropertyTest {
                 .thenReturn(CompletableFuture.completedFuture(mockResponse));
         
         // Given: controller with mock dependencies
-        OllamaConfig mockConfig = new OllamaConfig(
-                "localhost", 11434, "llama3.2", "nomic-embed-text", "qwen3-vl:8b",
-                Duration.ofSeconds(30), Duration.ofSeconds(120)
-        );
+        OpenAIApiConfig mockConfig = new OpenAIApiConfig("local", 1773532800L, "host-machine");
         OpenAIApiController controller = new OpenAIApiController(mockQueryHandler, mockConfig);
         
         // When: calling chatCompletions endpoint
@@ -243,10 +233,7 @@ class StreamingModeSelectionPropertyTest {
                 .thenReturn(CompletableFuture.completedFuture(mockChunkFlux));
         
         // Given: controller
-        OllamaConfig mockConfig = new OllamaConfig(
-                "localhost", 11434, "llama3.2", "nomic-embed-text", "qwen3-vl:8b",
-                Duration.ofSeconds(30), Duration.ofSeconds(120)
-        );
+        OpenAIApiConfig mockConfig = new OpenAIApiConfig("local", 1773532800L, "host-machine");
         OpenAIApiController controller = new OpenAIApiController(mockQueryHandler, mockConfig);
         
         // When: calling chatCompletions endpoint

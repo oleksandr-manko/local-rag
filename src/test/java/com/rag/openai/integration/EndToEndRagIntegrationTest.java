@@ -114,9 +114,9 @@ class EndToEndRagIntegrationTest {
         List<Float> embedding1 = List.of(0.1f, 0.2f, 0.3f, 0.4f);
         List<Float> embedding2 = List.of(0.5f, 0.6f, 0.7f, 0.8f);
 
-        when(ollamaClient.generateEmbedding(eq(chunks.get(0).text()), anyString()))
+        when(ollamaClient.generateEmbedding(eq(chunks.get(0).text())))
             .thenReturn(CompletableFuture.completedFuture(embedding1));
-        when(ollamaClient.generateEmbedding(eq(chunks.get(1).text()), anyString()))
+        when(ollamaClient.generateEmbedding(eq(chunks.get(1).text())))
             .thenReturn(CompletableFuture.completedFuture(embedding2));
 
         when(vectorStoreClient.storeEmbeddings(anyList()))
@@ -126,7 +126,7 @@ class EndToEndRagIntegrationTest {
         String userQuery = "What are the new features in Java 25?";
         List<Float> queryEmbedding = List.of(0.15f, 0.25f, 0.35f, 0.45f);
 
-        when(ollamaClient.generateEmbedding(eq(userQuery), anyString()))
+        when(ollamaClient.generateEmbedding(eq(userQuery)))
             .thenReturn(CompletableFuture.completedFuture(queryEmbedding));
 
         List<ScoredChunk> retrievedChunks = List.of(
@@ -141,12 +141,12 @@ class EndToEndRagIntegrationTest {
         String llmResponse = "Java 25 introduces enhanced pattern matching and record patterns, " +
                            "which improve code readability and reduce boilerplate code.";
 
-        when(ollamaClient.generate(anyString(), anyString()))
+        when(ollamaClient.generate(anyString()))
             .thenReturn(CompletableFuture.completedFuture(llmResponse));
 
         // Given: OpenAI API controller returns formatted response
         ChatCompletionRequest request = new ChatCompletionRequest(
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(new Message("user", userQuery)),
             false,
             Optional.empty(),
@@ -157,7 +157,7 @@ class EndToEndRagIntegrationTest {
             "chatcmpl-123",
             "chat.completion",
             System.currentTimeMillis() / 1000,
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(new Choice(
                 0,
                 new Message("assistant", llmResponse),
@@ -208,7 +208,7 @@ class EndToEndRagIntegrationTest {
         String userQuery = "Explain pattern matching in Java 25";
         
         ChatCompletionRequest streamingRequest = new ChatCompletionRequest(
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(new Message("user", userQuery)),
             true,  // streaming enabled
             Optional.empty(),
@@ -217,7 +217,7 @@ class EndToEndRagIntegrationTest {
 
         // Given: Query embedding and retrieval
         List<Float> queryEmbedding = List.of(0.1f, 0.2f, 0.3f);
-        when(ollamaClient.generateEmbedding(eq(userQuery), anyString()))
+        when(ollamaClient.generateEmbedding(eq(userQuery)))
             .thenReturn(CompletableFuture.completedFuture(queryEmbedding));
 
         TextChunk chunk = new TextChunk(
@@ -237,7 +237,7 @@ class EndToEndRagIntegrationTest {
             " destructure", " records", " directly", " in", " switch", " expressions", "."
         );
 
-        when(ollamaClient.generateStreaming(anyString(), anyString()))
+        when(ollamaClient.generateStreaming(anyString()))
             .thenReturn(CompletableFuture.completedFuture(tokenStream));
 
         // Given: Streaming chunks formatted as OpenAI chunks
@@ -246,7 +246,7 @@ class EndToEndRagIntegrationTest {
                 "chatcmpl-stream-123",
                 "chat.completion.chunk",
                 System.currentTimeMillis() / 1000,
-                "llama3.2",
+                "gpt-oss:20b",
                 List.of(new ChunkChoice(
                     0,
                     new Delta(Optional.empty(), Optional.of(token)),
@@ -403,7 +403,7 @@ class EndToEndRagIntegrationTest {
         String userQuery = "What is the weather today?";
         
         ChatCompletionRequest request = new ChatCompletionRequest(
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(new Message("user", userQuery)),
             false,
             Optional.empty(),
@@ -412,7 +412,7 @@ class EndToEndRagIntegrationTest {
 
         // Given: Query embedding is generated
         List<Float> queryEmbedding = List.of(0.1f, 0.2f, 0.3f);
-        when(ollamaClient.generateEmbedding(eq(userQuery), anyString()))
+        when(ollamaClient.generateEmbedding(eq(userQuery)))
             .thenReturn(CompletableFuture.completedFuture(queryEmbedding));
 
         // Given: No relevant chunks are found (empty list)
@@ -423,7 +423,7 @@ class EndToEndRagIntegrationTest {
         String llmResponse = "I don't have information about the current weather. " +
                            "I can only answer questions about the documents I have access to.";
 
-        when(ollamaClient.generate(eq(userQuery), anyString()))
+        when(ollamaClient.generate(eq(userQuery)))
             .thenReturn(CompletableFuture.completedFuture(llmResponse));
 
         // Given: Response is formatted
@@ -431,7 +431,7 @@ class EndToEndRagIntegrationTest {
             "chatcmpl-456",
             "chat.completion",
             System.currentTimeMillis() / 1000,
-            "llama3.2",
+            "gpt-oss:20b",
             List.of(new Choice(
                 0,
                 new Message("assistant", llmResponse),
@@ -525,7 +525,7 @@ class EndToEndRagIntegrationTest {
         // Given: Each query returns a response
         queries.forEach(query -> {
             ChatCompletionRequest request = new ChatCompletionRequest(
-                "llama3.2",
+                "gpt-oss:20b",
                 List.of(new Message("user", query)),
                 false,
                 Optional.empty(),
@@ -536,7 +536,7 @@ class EndToEndRagIntegrationTest {
                 "chatcmpl-" + query.hashCode(),
                 "chat.completion",
                 System.currentTimeMillis() / 1000,
-                "llama3.2",
+                "gpt-oss:20b",
                 List.of(new Choice(
                     0,
                     new Message("assistant", "Response to: " + query),
@@ -554,7 +554,7 @@ class EndToEndRagIntegrationTest {
         // When: Queries are executed in parallel
         List<CompletableFuture<ResponseEntity<?>>> futures = queries.stream()
             .map(query -> new ChatCompletionRequest(
-                "llama3.2",
+                "gpt-oss:20b",
                 List.of(new Message("user", query)),
                 false,
                 Optional.empty(),

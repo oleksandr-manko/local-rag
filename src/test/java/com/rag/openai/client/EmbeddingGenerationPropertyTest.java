@@ -69,17 +69,17 @@ class EmbeddingGenerationPropertyTest {
         // Given: a mocked OllamaClient with specific embedding model configuration
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
         
-        when(mockOllamaClient.generateEmbedding(anyString(), eq(embeddingModelName)))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(embeddingVector));
         
         // When: generating embeddings for chunks
         for (TextChunk chunk : chunks) {
-            mockOllamaClient.generateEmbedding(chunk.text(), embeddingModelName);
+            mockOllamaClient.generateEmbedding(chunk.text());
         }
         
         // Then: verify the configured embedding model name is used
         verify(mockOllamaClient, times(chunks.size()))
-                .generateEmbedding(anyString(), eq(embeddingModelName));
+                .generateEmbedding(anyString());
     }
 
     @Property(tries = 50)
@@ -119,15 +119,15 @@ class EmbeddingGenerationPropertyTest {
         
         // Given: a mocked OllamaClient
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
-        when(mockOllamaClient.generateEmbedding(anyString(), anyString()))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(embeddingVector));
         
         // When: generating embedding for the chunk
         ArgumentCaptor<String> textCaptor = ArgumentCaptor.forClass(String.class);
-        mockOllamaClient.generateEmbedding(chunk.text(), "nomic-embed-text");
+        mockOllamaClient.generateEmbedding(chunk.text());
         
         // Then: verify the chunk's text content is passed to Ollama
-        verify(mockOllamaClient).generateEmbedding(textCaptor.capture(), anyString());
+        verify(mockOllamaClient).generateEmbedding(textCaptor.capture());
         assertThat(textCaptor.getValue()).isEqualTo(chunk.text());
     }
 

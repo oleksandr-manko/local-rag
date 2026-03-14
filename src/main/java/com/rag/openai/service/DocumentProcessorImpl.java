@@ -4,7 +4,6 @@ import com.rag.openai.client.ollama.OllamaClient;
 import com.rag.openai.client.qdrant.VectorStoreClient;
 import com.rag.openai.client.redis.RedisClient;
 import com.rag.openai.config.DocumentsConfig;
-import com.rag.openai.config.OllamaConfig;
 import com.rag.openai.config.ProcessingConfig;
 import com.rag.openai.domain.model.DocumentMetadata;
 import com.rag.openai.domain.model.EmbeddingRecord;
@@ -45,7 +44,6 @@ public class DocumentProcessorImpl implements DocumentProcessor {
     private final ChunkingService chunkingService;
     private final DocumentsConfig documentsConfig;
     private final ProcessingConfig processingConfig;
-    private final OllamaConfig ollamaConfig;
     
     public DocumentProcessorImpl(
         RedisClient redisClient,
@@ -53,8 +51,7 @@ public class DocumentProcessorImpl implements DocumentProcessor {
         VectorStoreClient vectorStoreClient,
         ChunkingService chunkingService,
         DocumentsConfig documentsConfig,
-        ProcessingConfig processingConfig,
-        OllamaConfig ollamaConfig
+        ProcessingConfig processingConfig
     ) {
         this.redisClient = redisClient;
         this.ollamaClient = ollamaClient;
@@ -62,7 +59,6 @@ public class DocumentProcessorImpl implements DocumentProcessor {
         this.chunkingService = chunkingService;
         this.documentsConfig = documentsConfig;
         this.processingConfig = processingConfig;
-        this.ollamaConfig = ollamaConfig;
         
         logger.info("DocumentProcessor initialized with input folder: {}", 
             documentsConfig.inputFolder());
@@ -299,7 +295,7 @@ public class DocumentProcessorImpl implements DocumentProcessor {
      * Generate embedding for a single chunk.
      */
     private CompletableFuture<EmbeddingRecord> generateEmbeddingForChunk(TextChunk chunk) {
-        return ollamaClient.generateEmbedding(chunk.text(), ollamaConfig.embeddingModelName())
+        return ollamaClient.generateEmbedding(chunk.text())
             .thenApply(embedding -> new EmbeddingRecord(
                 UUID.randomUUID().toString(),
                 embedding,
@@ -341,7 +337,7 @@ public class DocumentProcessorImpl implements DocumentProcessor {
                 String prompt = "Extract all visible text from this image. " +
                     "Return only the text content without any additional commentary.";
                 
-                return ollamaClient.analyzeImage(imageData, prompt, ollamaConfig.visionModelName())
+                return ollamaClient.analyzeImage(imageData, prompt)
                     .thenApply(text -> {
                         if (text == null || text.isBlank()) {
                             logger.warn("No text extracted from image: {}", imageFile);

@@ -434,10 +434,10 @@ class ModifiedFileDetectionPropertyTest {
         });
         
         // Mock Ollama to return valid text
-        when(ollamaClient.analyzeImage(any(), any(), any())).thenReturn(
+        when(ollamaClient.analyzeImage(any(), any())).thenReturn(
                 CompletableFuture.completedFuture("Extracted text from image")
         );
-        when(ollamaClient.generateEmbedding(any(), any())).thenReturn(
+        when(ollamaClient.generateEmbedding(any())).thenReturn(
                 CompletableFuture.completedFuture(List.of(0.1f, 0.2f, 0.3f))
         );
         
@@ -470,15 +470,6 @@ class ModifiedFileDetectionPropertyTest {
                         100,
                         5,
                         Duration.ofSeconds(60)
-                ),
-                new OllamaConfig(
-                        "localhost",
-                        11434,
-                        "llama3.2",
-                        "nomic-embed-text",
-                        "qwen2-vl:8b",
-                        Duration.ofSeconds(30),
-                        Duration.ofSeconds(120)
                 )
         );
         

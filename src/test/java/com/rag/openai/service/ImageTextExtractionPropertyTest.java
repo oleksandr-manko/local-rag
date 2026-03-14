@@ -4,7 +4,6 @@ import com.rag.openai.client.ollama.OllamaClient;
 import com.rag.openai.client.qdrant.VectorStoreClient;
 import com.rag.openai.client.redis.RedisClient;
 import com.rag.openai.config.DocumentsConfig;
-import com.rag.openai.config.OllamaConfig;
 import com.rag.openai.config.ProcessingConfig;
 import net.jqwik.api.*;
 import net.jqwik.api.constraints.*;
@@ -55,7 +54,7 @@ class ImageTextExtractionPropertyTest {
             createSimpleImage(imageFile, extension);
             
             OllamaClient ollamaClient = mock(OllamaClient.class);
-            when(ollamaClient.analyzeImage(any(byte[].class), anyString(), anyString()))
+            when(ollamaClient.analyzeImage(any(byte[].class), anyString()))
                     .thenReturn(CompletableFuture.completedFuture(expectedText));
             
             DocumentProcessor processor = createMockedProcessor(tempDir, ollamaClient);
@@ -66,8 +65,7 @@ class ImageTextExtractionPropertyTest {
             // Then: the vision model should be called and text should be extracted
             verify(ollamaClient, times(1)).analyzeImage(
                     any(byte[].class),
-                    contains("Extract all visible text"),
-                    eq("qwen2-vl:8b")
+                    contains("Extract all visible text")
             );
             
             assertThat(extractedText).isPresent();
@@ -97,7 +95,7 @@ class ImageTextExtractionPropertyTest {
             createSimpleImage(imageFile, "jpg");
             
             OllamaClient ollamaClient = mock(OllamaClient.class);
-            when(ollamaClient.analyzeImage(any(byte[].class), anyString(), anyString()))
+            when(ollamaClient.analyzeImage(any(byte[].class), anyString()))
                     .thenReturn(CompletableFuture.completedFuture(visionModelResponse));
             
             DocumentProcessor processor = createMockedProcessor(tempDir, ollamaClient);
@@ -128,7 +126,7 @@ class ImageTextExtractionPropertyTest {
             createSimpleImage(imageFile, "png");
             
             OllamaClient ollamaClient = mock(OllamaClient.class);
-            when(ollamaClient.analyzeImage(any(byte[].class), anyString(), anyString()))
+            when(ollamaClient.analyzeImage(any(byte[].class), anyString()))
                     .thenReturn(CompletableFuture.completedFuture(""));
             
             DocumentProcessor processor = createMockedProcessor(tempDir, ollamaClient);
@@ -156,7 +154,7 @@ class ImageTextExtractionPropertyTest {
             createSimpleImage(imageFile, "jpg");
             
             OllamaClient ollamaClient = mock(OllamaClient.class);
-            when(ollamaClient.analyzeImage(any(byte[].class), anyString(), anyString()))
+            when(ollamaClient.analyzeImage(any(byte[].class), anyString()))
                     .thenReturn(CompletableFuture.completedFuture(null));
             
             DocumentProcessor processor = createMockedProcessor(tempDir, ollamaClient);
@@ -188,7 +186,7 @@ class ImageTextExtractionPropertyTest {
             String whitespaceText = " ".repeat(whitespaceLength);
             
             OllamaClient ollamaClient = mock(OllamaClient.class);
-            when(ollamaClient.analyzeImage(any(byte[].class), anyString(), anyString()))
+            when(ollamaClient.analyzeImage(any(byte[].class), anyString()))
                     .thenReturn(CompletableFuture.completedFuture(whitespaceText));
             
             DocumentProcessor processor = createMockedProcessor(tempDir, ollamaClient);
@@ -216,7 +214,7 @@ class ImageTextExtractionPropertyTest {
             createSimpleImage(imageFile, "jpg");
             
             OllamaClient ollamaClient = mock(OllamaClient.class);
-            when(ollamaClient.analyzeImage(any(byte[].class), anyString(), anyString()))
+            when(ollamaClient.analyzeImage(any(byte[].class), anyString()))
                     .thenReturn(CompletableFuture.failedFuture(
                             new RuntimeException("Vision model error")
                     ));
@@ -255,7 +253,7 @@ class ImageTextExtractionPropertyTest {
             assertThat(extractedText).isEmpty();
             
             // Vision model should not be called if file cannot be read
-            verify(ollamaClient, never()).analyzeImage(any(), anyString(), anyString());
+            verify(ollamaClient, never()).analyzeImage(any(), anyString());
             
         } finally {
             deleteDirectory(tempDir);
@@ -274,7 +272,7 @@ class ImageTextExtractionPropertyTest {
             Files.writeString(imageFile, "This is not a valid image file");
             
             OllamaClient ollamaClient = mock(OllamaClient.class);
-            when(ollamaClient.analyzeImage(any(byte[].class), anyString(), anyString()))
+            when(ollamaClient.analyzeImage(any(byte[].class), anyString()))
                     .thenReturn(CompletableFuture.completedFuture("Some text"));
             
             DocumentProcessor processor = createMockedProcessor(tempDir, ollamaClient);
@@ -307,7 +305,7 @@ class ImageTextExtractionPropertyTest {
             createSimpleImage(imageFile, extension);
             
             OllamaClient ollamaClient = mock(OllamaClient.class);
-            when(ollamaClient.analyzeImage(any(byte[].class), anyString(), anyString()))
+            when(ollamaClient.analyzeImage(any(byte[].class), anyString()))
                     .thenReturn(CompletableFuture.completedFuture(extractedText));
             
             DocumentProcessor processor = createMockedProcessor(tempDir, ollamaClient);
@@ -340,7 +338,7 @@ class ImageTextExtractionPropertyTest {
             createSimpleImage(imageFile, extension);
             
             OllamaClient ollamaClient = mock(OllamaClient.class);
-            when(ollamaClient.analyzeImage(any(byte[].class), anyString(), anyString()))
+            when(ollamaClient.analyzeImage(any(byte[].class), anyString()))
                     .thenReturn(CompletableFuture.completedFuture("Extracted text"));
             
             DocumentProcessor processor = createMockedProcessor(tempDir, ollamaClient);
@@ -355,8 +353,7 @@ class ImageTextExtractionPropertyTest {
                             prompt.contains("Extract") && 
                             prompt.contains("text") &&
                             prompt.contains("without any additional commentary")
-                    ),
-                    anyString()
+                    )
             );
             
         } finally {
@@ -378,7 +375,7 @@ class ImageTextExtractionPropertyTest {
             createSimpleImage(imageFile, extension);
             
             OllamaClient ollamaClient = mock(OllamaClient.class);
-            when(ollamaClient.analyzeImage(any(byte[].class), anyString(), anyString()))
+            when(ollamaClient.analyzeImage(any(byte[].class), anyString()))
                     .thenReturn(CompletableFuture.completedFuture("Text"));
             
             DocumentProcessor processor = createMockedProcessor(tempDir, ollamaClient);
@@ -389,8 +386,7 @@ class ImageTextExtractionPropertyTest {
             // Then: the configured vision model name should be used
             verify(ollamaClient).analyzeImage(
                     any(byte[].class),
-                    anyString(),
-                    eq("qwen2-vl:8b") // Default vision model from config
+                    anyString()
             );
             
         } finally {
@@ -429,15 +425,6 @@ class ImageTextExtractionPropertyTest {
                         100,
                         5,
                         Duration.ofSeconds(60)
-                ),
-                new OllamaConfig(
-                        "localhost",
-                        11434,
-                        "llama3.2",
-                        "nomic-embed-text",
-                        "qwen2-vl:8b",
-                        Duration.ofSeconds(30),
-                        Duration.ofSeconds(120)
                 )
         );
     }

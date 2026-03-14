@@ -32,13 +32,13 @@ After installing Ollama, pull the required models:
 
 ```bash
 # Text generation model
-ollama pull llama3.2
+ollama pull gpt-oss:20b
 
 # Embedding model
-ollama pull nomic-embed-text
+ollama pull qwen3-embedding:8b
 
 # Vision model for image text extraction
-ollama pull qwen2-vl:8b
+ollama pull qwen3-vl:8b
 ```
 
 Verify Ollama is running:
@@ -106,13 +106,13 @@ server:
 ### Ollama Configuration
 ```yaml
 ollama:
-  host: 127.0.0.1              # Ollama server host
-  port: 11434                   # Ollama server port
-  model-name: llama3.2          # Text generation model
-  embedding-model-name: nomic-embed-text  # Embedding model
-  vision-model-name: qwen2-vl:8b          # Vision model for images
-  connection-timeout: 30s       # Connection timeout
-  read-timeout: 120s            # Read timeout for long responses
+  host: 127.0.0.1                # Ollama server host
+  port: 11434                    # Ollama server port
+  model-name: llama3.2:3b        # Text generation model
+  embedding-model-name: qwen3-embedding:8b   # multilingual Embedding model
+  vision-model-name: qwen3-vl:8b # Vision model for images
+  connection-timeout: 30s        # Connection timeout
+  read-timeout: 120s             # Read timeout for long responses
 ```
 
 ### Qdrant Configuration
@@ -172,7 +172,7 @@ All configuration properties can be overridden using environment variables:
 # Ollama
 export OLLAMA_HOST=127.0.0.1
 export OLLAMA_PORT=11434
-export OLLAMA_MODEL_NAME=llama3.2
+export OLLAMA_MODEL_NAME=llama3.2:3b
 
 # Qdrant
 export QDRANT_HOST=localhost
@@ -297,7 +297,7 @@ OpenAI-compatible chat completion endpoint.
 curl -X POST http://localhost:8080/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "llama3.2",
+    "model": "llama3.2:3b",
     "messages": [
       {"role": "user", "content": "What is in the documents?"}
     ],
@@ -310,7 +310,7 @@ curl -X POST http://localhost:8080/v1/chat/completions \
 curl -X POST http://localhost:8080/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "llama3.2",
+    "model": "llama3.2:3b",
     "messages": [
       {"role": "user", "content": "Summarize the documents"}
     ],
@@ -485,14 +485,14 @@ curl http://localhost:8080/actuator/health
 
 ### Models Not Found
 
-**Problem:** `Model not found: llama3.2`
+**Problem:** `Model not found: gpt-oss:20b`
 
 **Solution:**
 Pull the required models:
 ```bash
-ollama pull llama3.2
-ollama pull nomic-embed-text
-ollama pull qwen2-vl:8b
+ollama pull gpt-oss:20b
+ollama pull qwen3-embedding:8b
+ollama pull qwen3-vl:8b
 ```
 
 ### No Documents Processed
@@ -653,7 +653,7 @@ ollama pull qwen2-vl:8b
 - **Spring Boot 4**: Modern Spring framework with improved performance
 - **Gradle 9.2**: Build automation with Gradle wrapper
 - **Apache PDFBox**: PDF text extraction
-- **Ollama**: Local LLM inference (llama3.2, nomic-embed-text, qwen2-vl:8b)
+- **Ollama**: Local LLM inference (gpt-oss:20b, qwen3-embedding:8b, qwen3-vl:8b)
 - **Qdrant**: High-performance vector database
 - **Redis**: In-memory hash store for file tracking
 - **Lettuce**: Async Redis client

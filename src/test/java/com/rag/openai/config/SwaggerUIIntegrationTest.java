@@ -55,21 +55,17 @@ class SwaggerUIIntegrationTest {
         openAPIConfiguration = new OpenAPIConfiguration();
         objectMapper = new ObjectMapper();
         
-        // Create mock OllamaConfig for controllers
-        OllamaConfig ollamaConfig = new OllamaConfig(
-            "localhost",
-            11434,
-            "llama3.2",
-            "nomic-embed-text",
-            "qwen3-vl:8b",
-            Duration.ofSeconds(30),
-            Duration.ofSeconds(120)
+        // Create OpenAIApiConfig for controller
+        OpenAIApiConfig openAIApiConfig = new OpenAIApiConfig(
+            "local",
+            1773532800L,
+            "host-machine"
         );
         
         // Build MockMvc with controllers
         mockMvc = MockMvcBuilders
             .standaloneSetup(
-                new OpenAIApiController(queryHandler, ollamaConfig),
+                new OpenAIApiController(queryHandler, openAIApiConfig),
                 new TestApiController(queryHandler),
                 new ProcessingController(processingJob)
             )

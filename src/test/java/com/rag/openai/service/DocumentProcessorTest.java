@@ -4,7 +4,6 @@ import com.rag.openai.client.ollama.OllamaClient;
 import com.rag.openai.client.qdrant.VectorStoreClient;
 import com.rag.openai.client.redis.RedisClient;
 import com.rag.openai.config.DocumentsConfig;
-import com.rag.openai.config.OllamaConfig;
 import com.rag.openai.config.ProcessingConfig;
 import com.rag.openai.domain.model.ProcessingResult;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,15 +57,6 @@ class DocumentProcessorTest {
             Duration.ofSeconds(60)
         );
         
-        OllamaConfig ollamaConfig = new OllamaConfig(
-            "localhost",
-            11434,
-            "llama3.2",
-            "nomic-embed-text",
-            "qwen2-vl:8b",
-            Duration.ofSeconds(30),
-            Duration.ofSeconds(120)
-        );
         
         documentProcessor = new DocumentProcessorImpl(
             redisClient,
@@ -74,8 +64,7 @@ class DocumentProcessorTest {
             vectorStoreClient,
             chunkingService,
             documentsConfig,
-            processingConfig,
-            ollamaConfig
+            processingConfig
         );
     }
     
@@ -225,7 +214,7 @@ class DocumentProcessorTest {
         Files.write(imageFile, new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF}); // JPEG header
         
         String extractedText = "Text from image";
-        when(ollamaClient.analyzeImage(any(), anyString(), anyString()))
+        when(ollamaClient.analyzeImage(any(), anyString()))
             .thenReturn(CompletableFuture.completedFuture(extractedText));
         
         // When: Extracting text from image
@@ -234,7 +223,7 @@ class DocumentProcessorTest {
         // Then: Should return extracted text from vision model
         assertTrue(result.isPresent());
         assertEquals(extractedText, result.get());
-        verify(ollamaClient).analyzeImage(any(), anyString(), eq("qwen2-vl:8b"));
+        verify(ollamaClient).analyzeImage(any(), anyString());
     }
     
     @Test
@@ -244,7 +233,7 @@ class DocumentProcessorTest {
         Path imageFile = tempDir.resolve("blank.png");
         Files.write(imageFile, new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47}); // PNG header
         
-        when(ollamaClient.analyzeImage(any(), anyString(), anyString()))
+        when(ollamaClient.analyzeImage(any(), anyString()))
             .thenReturn(CompletableFuture.completedFuture(""));
         
         // When: Extracting text from image
@@ -261,7 +250,7 @@ class DocumentProcessorTest {
         Path imageFile = tempDir.resolve("test.jpg");
         Files.write(imageFile, new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF});
         
-        when(ollamaClient.analyzeImage(any(), anyString(), anyString()))
+        when(ollamaClient.analyzeImage(any(), anyString()))
             .thenReturn(CompletableFuture.failedFuture(new RuntimeException("Vision model error")));
         
         // When: Extracting text from image

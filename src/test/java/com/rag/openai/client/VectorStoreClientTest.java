@@ -64,8 +64,8 @@ class VectorStoreClientTest {
         ollamaConfig = new OllamaConfig(
             "localhost",
             11434,
-            "llama3.2",
-            "nomic-embed-text",
+            "gpt-oss:20b",
+            "qwen3-embedding:8b",
             "qwen3-vl:8b",
             Duration.ofSeconds(30),
             Duration.ofSeconds(120)

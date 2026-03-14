@@ -1,6 +1,6 @@
 # Multi-stage build for RAG OpenAI API with Ollama
 # Stage 1: Builder - Build the application using Gradle wrapper
-FROM eclipse-temurin:25-jdk-alpine AS builder
+FROM amazoncorretto:21-alpine-jdk AS builder
 
 # Set working directory
 WORKDIR /app
@@ -13,6 +13,7 @@ COPY gradle/ gradle/
 # Copy build configuration files
 COPY build.gradle .
 COPY settings.gradle .
+COPY org/ org/
 
 # Make gradlew executable
 RUN chmod +x gradlew
@@ -22,10 +23,10 @@ COPY src/ src/
 
 # Build the application using Gradle wrapper
 # Skip tests during Docker build for faster builds
-RUN ./gradlew build -x test --no-daemon
+RUN ./gradlew build -i --stacktrace -x test --no-daemon
 
 # Stage 2: Runtime - Create minimal runtime image
-FROM eclipse-temurin:25-jre-alpine
+FROM amazoncorretto:25.0.0-alpine
 
 # Set working directory
 WORKDIR /app

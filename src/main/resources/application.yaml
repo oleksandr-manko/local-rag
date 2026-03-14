@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8081
   shutdown: graceful
 
 spring:
@@ -12,11 +12,18 @@ spring:
 ollama:
   host: 127.0.0.1
   port: 11434
-  model-name: llama3.2
-  embedding-model-name: nomic-embed-text
-  vision-model-name: qwen2-vl:8b
-  connection-timeout: 30s
+  model-name: gpt-oss:20b
+  embedding-model-name: qwen3-embedding:8b
+  vision-model-name: qwen3-vl:8b
+  connection-timeout: 120s
   read-timeout: 120s
+
+# OpenAI API Configuration
+openai:
+  api:
+    model-name: local
+    creation-date: 1773532800
+    owned-by: host-machine
 
 # Qdrant Configuration
 qdrant:
@@ -55,7 +62,7 @@ processing:
 # RAG Configuration
 rag:
   top-k-results: 5
-  similarity-threshold: 0.7
+  similarity-threshold: 0.6
   context-separator: "\n\n---\n\n"
   prompt-template: |
     Use the following context to answer the question. If the context doesn't contain relevant information, say so.
@@ -99,9 +106,6 @@ management:
 
 # OpenAPI Configuration
 springdoc:
-  api-docs:
-    path: /api-docs
-    enabled: true
   swagger-ui:
     path: /swagger-ui.html
     enabled: true

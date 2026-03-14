@@ -2,7 +2,6 @@ package com.rag.openai.service;
 
 import com.rag.openai.client.ollama.OllamaClient;
 import com.rag.openai.client.qdrant.VectorStoreClient;
-import com.rag.openai.config.OllamaConfig;
 import com.rag.openai.config.RagConfig;
 import com.rag.openai.domain.dto.ChatCompletionRequest;
 import com.rag.openai.domain.dto.Message;
@@ -14,7 +13,6 @@ import net.jqwik.api.constraints.*;
 import org.mockito.ArgumentCaptor;
 
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -63,21 +61,18 @@ class TopKRetrievalPropertyTest {
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
         VectorStoreClient mockVectorStoreClient = mock(VectorStoreClient.class);
         
-        when(mockOllamaClient.generateEmbedding(anyString(), anyString()))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(embeddingVector));
         when(mockVectorStoreClient.searchSimilar(anyList(), anyInt()))
                 .thenReturn(CompletableFuture.completedFuture(List.of()));
-        when(mockOllamaClient.generate(anyString(), anyString()))
+        when(mockOllamaClient.generate(anyString()))
                 .thenReturn(CompletableFuture.completedFuture("response"));
         
-        OllamaConfig ollamaConfig = createOllamaConfig(modelName, embeddingModelName);
-        RagConfig ragConfig = createRagConfig(topK);
         
         QueryHandler queryHandler = new QueryHandlerImpl(
                 mockOllamaClient,
                 mockVectorStoreClient,
-                ollamaConfig,
-                ragConfig
+                createRagConfig(topK)
         );
         
         // When: handling the query
@@ -113,21 +108,18 @@ class TopKRetrievalPropertyTest {
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
         VectorStoreClient mockVectorStoreClient = mock(VectorStoreClient.class);
         
-        when(mockOllamaClient.generateEmbedding(anyString(), anyString()))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(embeddingVector));
         when(mockVectorStoreClient.searchSimilar(anyList(), eq(topK)))
                 .thenReturn(CompletableFuture.completedFuture(List.of()));
-        when(mockOllamaClient.generate(anyString(), anyString()))
+        when(mockOllamaClient.generate(anyString()))
                 .thenReturn(CompletableFuture.completedFuture("response"));
         
-        OllamaConfig ollamaConfig = createOllamaConfig(modelName, embeddingModelName);
-        RagConfig ragConfig = createRagConfig(topK);
         
         QueryHandler queryHandler = new QueryHandlerImpl(
                 mockOllamaClient,
                 mockVectorStoreClient,
-                ollamaConfig,
-                ragConfig
+                createRagConfig(topK)
         );
         
         // When: handling the query
@@ -160,21 +152,18 @@ class TopKRetrievalPropertyTest {
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
         VectorStoreClient mockVectorStoreClient = mock(VectorStoreClient.class);
         
-        when(mockOllamaClient.generateEmbedding(anyString(), anyString()))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(embeddingVector));
         when(mockVectorStoreClient.searchSimilar(anyList(), anyInt()))
                 .thenReturn(CompletableFuture.completedFuture(List.of()));
-        when(mockOllamaClient.generate(anyString(), anyString()))
+        when(mockOllamaClient.generate(anyString()))
                 .thenReturn(CompletableFuture.completedFuture("response"));
         
-        OllamaConfig ollamaConfig = createOllamaConfig(modelName, embeddingModelName);
-        RagConfig ragConfig = createRagConfig(topK);
         
         QueryHandler queryHandler = new QueryHandlerImpl(
                 mockOllamaClient,
                 mockVectorStoreClient,
-                ollamaConfig,
-                ragConfig
+                createRagConfig(topK)
         );
         
         // When: handling the query
@@ -210,21 +199,18 @@ class TopKRetrievalPropertyTest {
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
         VectorStoreClient mockVectorStoreClient = mock(VectorStoreClient.class);
         
-        when(mockOllamaClient.generateEmbedding(anyString(), anyString()))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(embeddingVector));
         when(mockVectorStoreClient.searchSimilar(anyList(), eq(topK)))
                 .thenReturn(CompletableFuture.completedFuture(scoredChunks));
-        when(mockOllamaClient.generate(anyString(), anyString()))
+        when(mockOllamaClient.generate(anyString()))
                 .thenReturn(CompletableFuture.completedFuture("response"));
         
-        OllamaConfig ollamaConfig = createOllamaConfig(modelName, embeddingModelName);
-        RagConfig ragConfig = createRagConfig(topK);
         
         QueryHandler queryHandler = new QueryHandlerImpl(
                 mockOllamaClient,
                 mockVectorStoreClient,
-                ollamaConfig,
-                ragConfig
+                createRagConfig(topK)
         );
         
         // When: handling the query
@@ -258,21 +244,18 @@ class TopKRetrievalPropertyTest {
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
         VectorStoreClient mockVectorStoreClient = mock(VectorStoreClient.class);
         
-        when(mockOllamaClient.generateEmbedding(anyString(), anyString()))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(embeddingVector));
         when(mockVectorStoreClient.searchSimilar(anyList(), eq(topK)))
                 .thenReturn(CompletableFuture.completedFuture(List.of()));
-        when(mockOllamaClient.generate(anyString(), anyString()))
+        when(mockOllamaClient.generate(anyString()))
                 .thenReturn(CompletableFuture.completedFuture("response"));
         
-        OllamaConfig ollamaConfig = createOllamaConfig(modelName, embeddingModelName);
-        RagConfig ragConfig = createRagConfig(topK);
         
         QueryHandler queryHandler = new QueryHandlerImpl(
                 mockOllamaClient,
                 mockVectorStoreClient,
-                ollamaConfig,
-                ragConfig
+                createRagConfig(topK)
         );
         
         // When: handling the query
@@ -281,7 +264,7 @@ class TopKRetrievalPropertyTest {
         // Then: should handle empty results gracefully and still generate response
         assertThat(result).isNotNull();
         verify(mockVectorStoreClient).searchSimilar(anyList(), eq(topK));
-        verify(mockOllamaClient).generate(anyString(), anyString());
+        verify(mockOllamaClient).generate(anyString());
     }
 
     @Property(tries = 100)
@@ -308,21 +291,18 @@ class TopKRetrievalPropertyTest {
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
         VectorStoreClient mockVectorStoreClient = mock(VectorStoreClient.class);
         
-        when(mockOllamaClient.generateEmbedding(anyString(), anyString()))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(embeddingVector));
         when(mockVectorStoreClient.searchSimilar(anyList(), eq(1)))
                 .thenReturn(CompletableFuture.completedFuture(createScoredChunks(1)));
-        when(mockOllamaClient.generate(anyString(), anyString()))
+        when(mockOllamaClient.generate(anyString()))
                 .thenReturn(CompletableFuture.completedFuture("response"));
         
-        OllamaConfig ollamaConfig = createOllamaConfig(modelName, embeddingModelName);
-        RagConfig ragConfig = createRagConfig(topK);
         
         QueryHandler queryHandler = new QueryHandlerImpl(
                 mockOllamaClient,
                 mockVectorStoreClient,
-                ollamaConfig,
-                ragConfig
+                createRagConfig(topK)
         );
         
         // When: handling the query
@@ -355,21 +335,18 @@ class TopKRetrievalPropertyTest {
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
         VectorStoreClient mockVectorStoreClient = mock(VectorStoreClient.class);
         
-        when(mockOllamaClient.generateEmbedding(anyString(), anyString()))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(embeddingVector));
         when(mockVectorStoreClient.searchSimilar(anyList(), eq(topK)))
                 .thenReturn(CompletableFuture.completedFuture(List.of()));
-        when(mockOllamaClient.generate(anyString(), anyString()))
+        when(mockOllamaClient.generate(anyString()))
                 .thenReturn(CompletableFuture.completedFuture("response"));
         
-        OllamaConfig ollamaConfig = createOllamaConfig(modelName, embeddingModelName);
-        RagConfig ragConfig = createRagConfig(topK);
         
         QueryHandler queryHandler = new QueryHandlerImpl(
                 mockOllamaClient,
                 mockVectorStoreClient,
-                ollamaConfig,
-                ragConfig
+                createRagConfig(topK)
         );
         
         // When: handling the query
@@ -402,21 +379,18 @@ class TopKRetrievalPropertyTest {
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
         VectorStoreClient mockVectorStoreClient = mock(VectorStoreClient.class);
         
-        when(mockOllamaClient.generateEmbedding(anyString(), anyString()))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(embeddingVector));
         when(mockVectorStoreClient.searchSimilar(anyList(), anyInt()))
                 .thenReturn(CompletableFuture.completedFuture(List.of()));
-        when(mockOllamaClient.generate(anyString(), anyString()))
+        when(mockOllamaClient.generate(anyString()))
                 .thenReturn(CompletableFuture.completedFuture("response"));
         
-        OllamaConfig ollamaConfig = createOllamaConfig(modelName, embeddingModelName);
-        RagConfig ragConfig = createRagConfig(topK);
         
         QueryHandler queryHandler = new QueryHandlerImpl(
                 mockOllamaClient,
                 mockVectorStoreClient,
-                ollamaConfig,
-                ragConfig
+                createRagConfig(topK)
         );
         
         // When: handling the query
@@ -444,21 +418,18 @@ class TopKRetrievalPropertyTest {
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
         VectorStoreClient mockVectorStoreClient = mock(VectorStoreClient.class);
         
-        when(mockOllamaClient.generateEmbedding(anyString(), anyString()))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(embeddingVector));
         when(mockVectorStoreClient.searchSimilar(anyList(), anyInt()))
                 .thenReturn(CompletableFuture.completedFuture(List.of()));
-        when(mockOllamaClient.generate(anyString(), anyString()))
+        when(mockOllamaClient.generate(anyString()))
                 .thenReturn(CompletableFuture.completedFuture("response"));
         
-        OllamaConfig ollamaConfig = createOllamaConfig(modelName, embeddingModelName);
-        RagConfig ragConfig = createRagConfig(topK);
         
         QueryHandler queryHandler = new QueryHandlerImpl(
                 mockOllamaClient,
                 mockVectorStoreClient,
-                ollamaConfig,
-                ragConfig
+                createRagConfig(topK)
         );
         
         // When: processing multiple queries
@@ -510,21 +481,18 @@ class TopKRetrievalPropertyTest {
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
         VectorStoreClient mockVectorStoreClient = mock(VectorStoreClient.class);
         
-        when(mockOllamaClient.generateEmbedding(anyString(), anyString()))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(embeddingVector));
         when(mockVectorStoreClient.searchSimilar(anyList(), eq(topK)))
                 .thenReturn(CompletableFuture.completedFuture(scoredChunks));
-        when(mockOllamaClient.generate(anyString(), anyString()))
+        when(mockOllamaClient.generate(anyString()))
                 .thenReturn(CompletableFuture.completedFuture("response"));
         
-        OllamaConfig ollamaConfig = createOllamaConfig(modelName, embeddingModelName);
-        RagConfig ragConfig = createRagConfig(topK);
         
         QueryHandler queryHandler = new QueryHandlerImpl(
                 mockOllamaClient,
                 mockVectorStoreClient,
-                ollamaConfig,
-                ragConfig
+                createRagConfig(topK)
         );
         
         // When: handling the query
@@ -532,22 +500,10 @@ class TopKRetrievalPropertyTest {
         
         // Then: should retrieve results and use them for generation
         verify(mockVectorStoreClient).searchSimilar(anyList(), eq(topK));
-        verify(mockOllamaClient).generate(anyString(), anyString());
+        verify(mockOllamaClient).generate(anyString());
     }
 
     // ==================== Helper Methods ====================
-
-    private OllamaConfig createOllamaConfig(String modelName, String embeddingModelName) {
-        return new OllamaConfig(
-                "localhost",
-                11434,
-                modelName,
-                embeddingModelName,
-                "qwen3-vl:8b",
-                Duration.ofSeconds(30),
-                Duration.ofSeconds(120)
-        );
-    }
 
     private RagConfig createRagConfig(int topK) {
         return new RagConfig(
@@ -584,7 +540,7 @@ class TopKRetrievalPropertyTest {
     @Provide
     Arbitrary<String> modelName() {
         return Arbitraries.of(
-                "llama3.2",
+                "gpt-oss:20b",
                 "llama3.2:1b",
                 "llama3.2:3b",
                 "mistral",
@@ -598,7 +554,7 @@ class TopKRetrievalPropertyTest {
     @Provide
     Arbitrary<String> embeddingModelName() {
         return Arbitraries.of(
-                "nomic-embed-text",
+                "qwen3-embedding:8b",
                 "mxbai-embed-large",
                 "all-minilm",
                 "snowflake-arctic-embed"

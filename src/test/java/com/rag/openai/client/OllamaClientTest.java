@@ -29,7 +29,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Unit tests for OllamaClient implementation.
  * Tests request formatting, response parsing, connection error handling, and timeout handling.
  */
-@Disabled
 class OllamaClientTest {
 
     private MockWebServer mockServer;
@@ -41,13 +40,13 @@ class OllamaClientTest {
         // Given: A mock Ollama server
         mockServer = new MockWebServer();
         mockServer.start();
-        
+
         // Use short timeouts for faster test execution
         config = new OllamaConfig(
             mockServer.getHostName(),
             mockServer.getPort(),
-            "llama3.2",
-            "nomic-embed-text",
+            "gpt-oss:20b",
+            "qwen3-embedding:8b",
             "qwen3-vl:8b",
             Duration.ofMillis(500),  // Short connection timeout
             Duration.ofSeconds(2)     // Short read timeout
@@ -62,15 +61,28 @@ class OllamaClientTest {
     }
 
     @Test
-    @Disabled
     @DisplayName("When generating text with valid request Then response is parsed correctly")
     void testGenerateSuccess() throws Exception {
-        // Given: A successful Ollama response
+        // Given: A successful Ollama response in OpenAI completions format
         String responseJson = """
             {
-                "model": "llama3.2",
-                "response": "This is a generated response.",
-                "done": true
+                "id": "cmpl-123",
+                "object": "text_completion",
+                "created": 1715634521,
+                "model": "gpt-oss:20b",
+                "choices": [
+                    {
+                        "text": "This is a generated response.",
+                        "index": 0,
+                        "logprobs": null,
+                        "finish_reason": "stop"
+                    }
+                ],
+                "usage": {
+                    "prompt_tokens": 7,
+                    "completion_tokens": 6,
+                    "total_tokens": 13
+                }
             }
             """;
         
@@ -80,8 +92,7 @@ class OllamaClientTest {
 
         // When: Generating text
         CompletableFuture<String> result = ollamaClient.generate(
-            "What is the meaning of life?",
-            "llama3.2"
+            "What is the meaning of life?"
         );
 
         // Then: The response is parsed correctly
@@ -92,26 +103,39 @@ class OllamaClientTest {
         // Verify request format
         RecordedRequest request = mockServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).isEqualTo("/api/generate");
+        assertThat(request.getPath()).isEqualTo("/v1/completions");
         assertThat(request.getHeader("Content-Type")).contains("application/json");
         
         String requestBody = request.getBody().readUtf8();
-        assertThat(requestBody).contains("\"model\":\"llama3.2\"");
+        assertThat(requestBody).contains("\"model\":\"gpt-oss:20b\"");
         assertThat(requestBody).contains("\"prompt\":\"What is the meaning of life?\"");
         assertThat(requestBody).contains("\"stream\":false");
     }
 
     @Test
-    @Disabled
     @DisplayName("When generating text with special characters Then request is formatted correctly")
     void testGenerateWithSpecialCharacters() throws Exception {
         // Given: A prompt with special characters
         String promptWithSpecialChars = "What is \"life\"?\nAnd what about 'meaning'?";
         String responseJson = """
             {
-                "model": "llama3.2",
-                "response": "Life is complex.",
-                "done": true
+                "id": "cmpl-456",
+                "object": "text_completion",
+                "created": 1715634521,
+                "model": "gpt-oss:20b",
+                "choices": [
+                    {
+                        "text": "Life is complex.",
+                        "index": 0,
+                        "logprobs": null,
+                        "finish_reason": "stop"
+                    }
+                ],
+                "usage": {
+                    "prompt_tokens": 10,
+                    "completion_tokens": 3,
+                    "total_tokens": 13
+                }
             }
             """;
         
@@ -121,8 +145,7 @@ class OllamaClientTest {
 
         // When: Generating text with special characters
         CompletableFuture<String> result = ollamaClient.generate(
-            promptWithSpecialChars,
-            "llama3.2"
+            promptWithSpecialChars
         );
 
         // Then: The request is formatted correctly
@@ -140,9 +163,9 @@ class OllamaClientTest {
     @Disabled
     @DisplayName("When generating streaming text Then request format includes stream flag")
     void testGenerateStreamingRequestFormat() throws Exception {
-        // Given: A streaming response (simplified - just verify request format)
+        // Given: A streaming response
         String responseJson = """
-            {"model":"llama3.2","response":"Hello world!","done":true}
+            {"id":"cmpl-789","object":"text_completion","created":1715634521,"model":"gpt-oss:20b","choices":[{"text":"Hello world!","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":2,"completion_tokens":2,"total_tokens":4}}
             """;
         
         mockServer.enqueue(new MockResponse()
@@ -151,8 +174,7 @@ class OllamaClientTest {
 
         // When: Generating streaming text
         CompletableFuture<Flux<String>> result = ollamaClient.generateStreaming(
-            "Say hello",
-            "llama3.2"
+            "Say hello"
         );
 
         // Then: The request format includes stream flag
@@ -160,7 +182,7 @@ class OllamaClientTest {
         
         RecordedRequest request = mockServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).isEqualTo("/api/generate");
+        assertThat(request.getPath()).isEqualTo("/v1/completions");
         
         String requestBody = request.getBody().readUtf8();
         assertThat(requestBody).contains("\"stream\":true");
@@ -169,13 +191,24 @@ class OllamaClientTest {
     }
 
     @Test
-    @Disabled
     @DisplayName("When generating embedding Then request is formatted correctly")
     void testGenerateEmbeddingRequestFormat() throws Exception {
-        // Given: An embedding response
+        // Given: An embedding response in OpenAI format
         String responseJson = """
             {
-                "embedding": [0.1, 0.2, 0.3, 0.4, 0.5]
+                "object": "list",
+                "data": [
+                    {
+                        "object": "embedding",
+                        "index": 0,
+                        "embedding": [0.1, 0.2, 0.3, 0.4, 0.5]
+                    }
+                ],
+                "model": "qwen3-embedding:8b",
+                "usage": {
+                    "prompt_tokens": 5,
+                    "total_tokens": 5
+                }
             }
             """;
         
@@ -185,8 +218,7 @@ class OllamaClientTest {
 
         // When: Generating an embedding
         CompletableFuture<List<Float>> result = ollamaClient.generateEmbedding(
-            "Sample text for embedding",
-            "nomic-embed-text"
+            "Sample text for embedding"
         );
 
         // Then: The request is formatted correctly
@@ -196,16 +228,16 @@ class OllamaClientTest {
         
         RecordedRequest request = mockServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).isEqualTo("/api/embeddings");
+        assertThat(request.getPath()).isEqualTo("/v1/embeddings");
         assertThat(request.getHeader("Content-Type")).contains("application/json");
         
         String requestBody = request.getBody().readUtf8();
-        assertThat(requestBody).contains("\"model\":\"nomic-embed-text\"");
-        assertThat(requestBody).contains("\"prompt\":\"Sample text for embedding\"");
+        assertThat(requestBody).contains("\"model\":\"qwen3-embedding:8b\"");
+        assertThat(requestBody).contains("\"input\":\"Sample text for embedding\"");
+        assertThat(requestBody).contains("\"encoding_format\":\"float\"");
     }
 
     @Test
-    @Disabled
     @DisplayName("When generating embedding with large dimension Then response is parsed correctly")
     void testGenerateEmbeddingLargeDimension() throws Exception {
         // Given: An embedding response with 768 dimensions
@@ -220,7 +252,19 @@ class OllamaClientTest {
         
         String responseJson = String.format("""
             {
-                "embedding": %s
+                "object": "list",
+                "data": [
+                    {
+                        "object": "embedding",
+                        "index": 0,
+                        "embedding": %s
+                    }
+                ],
+                "model": "qwen3-embedding:8b",
+                "usage": {
+                    "prompt_tokens": 2,
+                    "total_tokens": 2
+                }
             }
             """, embeddingArray);
         
@@ -230,8 +274,7 @@ class OllamaClientTest {
 
         // When: Generating an embedding
         CompletableFuture<List<Float>> result = ollamaClient.generateEmbedding(
-            "Sample text",
-            "nomic-embed-text"
+            "Sample text"
         );
 
         // Then: The response is parsed correctly with all dimensions
@@ -243,7 +286,6 @@ class OllamaClientTest {
     }
 
     @Test
-    @Disabled
     @DisplayName("When server returns 500 error Then ServiceUnavailableException is thrown")
     void testGenerateServerError() {
         // Given: A server error response
@@ -253,8 +295,7 @@ class OllamaClientTest {
 
         // When: Generating text
         CompletableFuture<String> result = ollamaClient.generate(
-            "Test prompt",
-            "llama3.2"
+            "Test prompt"
         );
 
         // Then: ServiceUnavailableException is thrown
@@ -266,7 +307,6 @@ class OllamaClientTest {
     }
 
     @Test
-    @Disabled
     @DisplayName("When server returns 404 error Then ServiceUnavailableException is thrown")
     void testGenerateNotFoundError() {
         // Given: A not found error response
@@ -276,8 +316,7 @@ class OllamaClientTest {
 
         // When: Generating text
         CompletableFuture<String> result = ollamaClient.generate(
-            "Test prompt",
-            "nonexistent-model"
+            "Test prompt"
         );
 
         // Then: ServiceUnavailableException is thrown
@@ -289,7 +328,6 @@ class OllamaClientTest {
     }
 
     @Test
-    @Disabled
     @DisplayName("When connection fails Then ServiceUnavailableException is thrown")
     void testGenerateConnectionError() throws IOException {
         // Given: A server that is shut down
@@ -297,8 +335,7 @@ class OllamaClientTest {
 
         // When: Attempting to generate text
         CompletableFuture<String> result = ollamaClient.generate(
-            "Test prompt",
-            "llama3.2"
+            "Test prompt"
         );
 
         // Then: ServiceUnavailableException is thrown
@@ -310,18 +347,19 @@ class OllamaClientTest {
     }
 
     @Test
-    @Disabled
     @DisplayName("When request times out Then ServiceTimeoutException is thrown")
     void testGenerateTimeout() {
         // Given: A server that delays response beyond timeout
+        String responseJson = """
+            {"id":"cmpl-timeout","object":"text_completion","created":1715634521,"model":"gpt-oss:20b","choices":[{"text":"Late response","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":2,"completion_tokens":2,"total_tokens":4}}
+            """;
         mockServer.enqueue(new MockResponse()
-            .setBody("{\"model\":\"llama3.2\",\"response\":\"Late response\",\"done\":true}")
+            .setBody(responseJson)
             .setBodyDelay(3, java.util.concurrent.TimeUnit.SECONDS));
 
         // When: Generating text with short timeout
         CompletableFuture<String> result = ollamaClient.generate(
-            "Test prompt",
-            "llama3.2"
+            "Test prompt"
         );
 
         // Then: ServiceTimeoutException is thrown
@@ -333,18 +371,19 @@ class OllamaClientTest {
     }
 
     @Test
-    @Disabled
     @DisplayName("When embedding request times out Then ServiceTimeoutException is thrown")
     void testGenerateEmbeddingTimeout() {
         // Given: A server that delays response beyond timeout
+        String responseJson = """
+            {"object":"list","data":[{"object":"embedding","index":0,"embedding":[0.1,0.2,0.3]}],"model":"qwen3-embedding:8b","usage":{"prompt_tokens":2,"total_tokens":2}}
+            """;
         mockServer.enqueue(new MockResponse()
-            .setBody("{\"embedding\":[0.1,0.2,0.3]}")
+            .setBody(responseJson)
             .setBodyDelay(3, java.util.concurrent.TimeUnit.SECONDS));
 
         // When: Generating embedding with short timeout
         CompletableFuture<List<Float>> result = ollamaClient.generateEmbedding(
-            "Test text",
-            "nomic-embed-text"
+            "Test text"
         );
 
         // Then: ServiceTimeoutException is thrown
@@ -356,12 +395,11 @@ class OllamaClientTest {
     }
 
     @Test
-    @Disabled
     @DisplayName("When verifying connectivity with healthy server Then true is returned")
     void testVerifyConnectivitySuccess() throws Exception {
         // Given: A healthy server
         mockServer.enqueue(new MockResponse()
-            .setBody("{\"models\":[]}")
+            .setBody("{\"data\":[]}")
             .setHeader("Content-Type", "application/json"));
 
         // When: Verifying connectivity
@@ -374,11 +412,10 @@ class OllamaClientTest {
         
         RecordedRequest request = mockServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("GET");
-        assertThat(request.getPath()).isEqualTo("/api/tags");
+        assertThat(request.getPath()).isEqualTo("/v1/models");
     }
 
     @Test
-    @Disabled
     @DisplayName("When verifying connectivity with unavailable server Then false is returned")
     void testVerifyConnectivityFailure() throws Exception {
         // Given: A server that is shut down
@@ -394,12 +431,11 @@ class OllamaClientTest {
     }
 
     @Test
-    @Disabled
     @DisplayName("When verifying connectivity times out Then false is returned")
     void testVerifyConnectivityTimeout() throws Exception {
         // Given: A server that delays response beyond connection timeout
         mockServer.enqueue(new MockResponse()
-            .setBody("{\"models\":[]}")
+            .setBody("{\"data\":[]}")
             .setBodyDelay(1, java.util.concurrent.TimeUnit.SECONDS));
 
         // When: Verifying connectivity
@@ -412,7 +448,6 @@ class OllamaClientTest {
     }
 
     @Test
-    @Disabled
     @DisplayName("When response has invalid JSON Then error is handled gracefully")
     void testGenerateInvalidJsonResponse() {
         // Given: An invalid JSON response
@@ -422,8 +457,7 @@ class OllamaClientTest {
 
         // When: Generating text
         CompletableFuture<String> result = ollamaClient.generate(
-            "Test prompt",
-            "llama3.2"
+            "Test prompt"
         );
 
         // Then: An exception is thrown
@@ -433,7 +467,6 @@ class OllamaClientTest {
     }
 
     @Test
-    @Disabled
     @DisplayName("When embedding response has invalid JSON Then error is handled gracefully")
     void testGenerateEmbeddingInvalidJsonResponse() {
         // Given: An invalid JSON response
@@ -443,8 +476,7 @@ class OllamaClientTest {
 
         // When: Generating embedding
         CompletableFuture<List<Float>> result = ollamaClient.generateEmbedding(
-            "Test text",
-            "nomic-embed-text"
+            "Test text"
         );
 
         // Then: An exception is thrown
@@ -454,15 +486,28 @@ class OllamaClientTest {
     }
 
     @Test
-    @Disabled
     @DisplayName("When response has empty text Then empty string is returned")
     void testGenerateEmptyResponse() throws Exception {
-        // Given: A response with empty text
+        // Given: A response with empty text in choices
         String responseJson = """
             {
-                "model": "llama3.2",
-                "response": "",
-                "done": true
+                "id": "cmpl-empty",
+                "object": "text_completion",
+                "created": 1715634521,
+                "model": "gpt-oss:20b",
+                "choices": [
+                    {
+                        "text": "",
+                        "index": 0,
+                        "logprobs": null,
+                        "finish_reason": "stop"
+                    }
+                ],
+                "usage": {
+                    "prompt_tokens": 2,
+                    "completion_tokens": 0,
+                    "total_tokens": 2
+                }
             }
             """;
         
@@ -472,8 +517,7 @@ class OllamaClientTest {
 
         // When: Generating text
         CompletableFuture<String> result = ollamaClient.generate(
-            "Test prompt",
-            "llama3.2"
+            "Test prompt"
         );
 
         // Then: Empty string is returned
@@ -483,13 +527,24 @@ class OllamaClientTest {
     }
 
     @Test
-    @Disabled
-    @DisplayName("When embedding response has empty array Then empty list is returned")
+    @DisplayName("When embedding response has empty embedding array Then empty list is returned")
     void testGenerateEmbeddingEmptyArray() throws Exception {
-        // Given: An embedding response with empty array
+        // Given: An embedding response with empty embedding array
         String responseJson = """
             {
-                "embedding": []
+                "object": "list",
+                "data": [
+                    {
+                        "object": "embedding",
+                        "index": 0,
+                        "embedding": []
+                    }
+                ],
+                "model": "qwen3-embedding:8b",
+                "usage": {
+                    "prompt_tokens": 2,
+                    "total_tokens": 2
+                }
             }
             """;
         
@@ -499,8 +554,7 @@ class OllamaClientTest {
 
         // When: Generating embedding
         CompletableFuture<List<Float>> result = ollamaClient.generateEmbedding(
-            "Test text",
-            "nomic-embed-text"
+            "Test text"
         );
 
         // Then: Empty list is returned

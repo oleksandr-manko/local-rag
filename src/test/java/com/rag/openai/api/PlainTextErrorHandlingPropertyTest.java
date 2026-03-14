@@ -232,7 +232,7 @@ class PlainTextErrorHandlingPropertyTest {
     @Label("When error occurs Then error response does not contain JSON structure")
     void errorResponseIsNotJson(
             @ForAll @NotBlank @StringLength(min = 1, max = 1000) String prompt,
-            @ForAll @NotBlank @StringLength(min = 10, max = 200) String errorMessage
+            @ForAll("safeErrorMessages") String errorMessage
     ) {
         // Feature: rag-openai-api-ollama, Property 29: Plain Text Error Handling
         

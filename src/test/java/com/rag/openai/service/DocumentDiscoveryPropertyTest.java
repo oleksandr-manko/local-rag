@@ -4,7 +4,6 @@ import com.rag.openai.client.ollama.OllamaClient;
 import com.rag.openai.client.qdrant.VectorStoreClient;
 import com.rag.openai.client.redis.RedisClient;
 import com.rag.openai.config.DocumentsConfig;
-import com.rag.openai.config.OllamaConfig;
 import com.rag.openai.config.ProcessingConfig;
 import com.rag.openai.domain.model.ProcessingResult;
 import net.jqwik.api.*;
@@ -355,10 +354,10 @@ class DocumentDiscoveryPropertyTest {
         );
         
         // Mock Ollama to return valid text for images
-        when(ollamaClient.analyzeImage(any(), any(), any())).thenReturn(
+        when(ollamaClient.analyzeImage(any(), any())).thenReturn(
                 CompletableFuture.completedFuture("Extracted text from image")
         );
-        when(ollamaClient.generateEmbedding(any(), any())).thenReturn(
+        when(ollamaClient.generateEmbedding(any())).thenReturn(
                 CompletableFuture.completedFuture(List.of(0.1f, 0.2f, 0.3f))
         );
         
@@ -392,15 +391,6 @@ class DocumentDiscoveryPropertyTest {
                         100,
                         5,
                         Duration.ofSeconds(60)
-                ),
-                new OllamaConfig(
-                        "localhost",
-                        11434,
-                        "llama3.2",
-                        "nomic-embed-text",
-                        "qwen2-vl:8b",
-                        Duration.ofSeconds(30),
-                        Duration.ofSeconds(120)
                 )
         );
         

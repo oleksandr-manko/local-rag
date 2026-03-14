@@ -2,7 +2,7 @@ package com.rag.openai.service;
 
 import com.rag.openai.client.ollama.OllamaClient;
 import com.rag.openai.client.qdrant.VectorStoreClient;
-import com.rag.openai.config.OllamaConfig;
+
 import com.rag.openai.config.RagConfig;
 import com.rag.openai.domain.dto.*;
 import com.rag.openai.domain.model.ScoredChunk;
@@ -50,10 +50,6 @@ class StreamingTokenForwardingPropertyTest {
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
         VectorStoreClient mockVectorStoreClient = mock(VectorStoreClient.class);
         
-        OllamaConfig ollamaConfig = new OllamaConfig(
-                "localhost", 11434, model, "nomic-embed-text", "qwen3-vl:8b",
-                Duration.ofSeconds(30), Duration.ofSeconds(120)
-        );
         
         RagConfig ragConfig = new RagConfig(
                 5, 0.7, "\n\n---\n\n",
@@ -67,10 +63,10 @@ class StreamingTokenForwardingPropertyTest {
         }
         Flux<String> tokenFlux = Flux.fromArray(tokens);
         
-        when(mockOllamaClient.generateStreaming(anyString(), eq(model)))
+        when(mockOllamaClient.generateStreaming(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(tokenFlux));
         
-        when(mockOllamaClient.generateEmbedding(anyString(), anyString()))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(List.of(0.1f, 0.2f, 0.3f)));
         
         when(mockVectorStoreClient.searchSimilar(anyList(), anyInt()))
@@ -78,7 +74,7 @@ class StreamingTokenForwardingPropertyTest {
         
         // Given: QueryHandler with mock dependencies
         QueryHandler queryHandler = new QueryHandlerImpl(
-                mockOllamaClient, mockVectorStoreClient, ollamaConfig, ragConfig
+                mockOllamaClient, mockVectorStoreClient, ragConfig
         );
         
         // Given: a streaming request
@@ -102,7 +98,7 @@ class StreamingTokenForwardingPropertyTest {
                 .verify(Duration.ofSeconds(5));
         
         // Then: verify Ollama streaming was called
-        verify(mockOllamaClient, times(1)).generateStreaming(anyString(), eq(model));
+        verify(mockOllamaClient, times(1)).generateStreaming(anyString());
     }
 
     @Property(tries = 100)
@@ -117,10 +113,6 @@ class StreamingTokenForwardingPropertyTest {
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
         VectorStoreClient mockVectorStoreClient = mock(VectorStoreClient.class);
         
-        OllamaConfig ollamaConfig = new OllamaConfig(
-                "localhost", 11434, model, "nomic-embed-text", "qwen3-vl:8b",
-                Duration.ofSeconds(30), Duration.ofSeconds(120)
-        );
         
         RagConfig ragConfig = new RagConfig(
                 5, 0.7, "\n\n---\n\n",
@@ -134,10 +126,10 @@ class StreamingTokenForwardingPropertyTest {
         }
         Flux<String> tokenFlux = Flux.fromArray(tokens);
         
-        when(mockOllamaClient.generateStreaming(anyString(), eq(model)))
+        when(mockOllamaClient.generateStreaming(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(tokenFlux));
         
-        when(mockOllamaClient.generateEmbedding(anyString(), anyString()))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(List.of(0.1f, 0.2f, 0.3f)));
         
         when(mockVectorStoreClient.searchSimilar(anyList(), anyInt()))
@@ -145,7 +137,7 @@ class StreamingTokenForwardingPropertyTest {
         
         // Given: QueryHandler
         QueryHandler queryHandler = new QueryHandlerImpl(
-                mockOllamaClient, mockVectorStoreClient, ollamaConfig, ragConfig
+                mockOllamaClient, mockVectorStoreClient, ragConfig
         );
         
         // Given: a streaming request
@@ -186,10 +178,6 @@ class StreamingTokenForwardingPropertyTest {
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
         VectorStoreClient mockVectorStoreClient = mock(VectorStoreClient.class);
         
-        OllamaConfig ollamaConfig = new OllamaConfig(
-                "localhost", 11434, model, "nomic-embed-text", "qwen3-vl:8b",
-                Duration.ofSeconds(30), Duration.ofSeconds(120)
-        );
         
         RagConfig ragConfig = new RagConfig(
                 5, 0.7, "\n\n---\n\n",
@@ -203,10 +191,10 @@ class StreamingTokenForwardingPropertyTest {
         }
         Flux<String> tokenFlux = Flux.fromArray(tokens);
         
-        when(mockOllamaClient.generateStreaming(anyString(), eq(model)))
+        when(mockOllamaClient.generateStreaming(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(tokenFlux));
         
-        when(mockOllamaClient.generateEmbedding(anyString(), anyString()))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(List.of(0.1f, 0.2f, 0.3f)));
         
         when(mockVectorStoreClient.searchSimilar(anyList(), anyInt()))
@@ -214,7 +202,7 @@ class StreamingTokenForwardingPropertyTest {
         
         // Given: QueryHandler
         QueryHandler queryHandler = new QueryHandlerImpl(
-                mockOllamaClient, mockVectorStoreClient, ollamaConfig, ragConfig
+                mockOllamaClient, mockVectorStoreClient, ragConfig
         );
         
         // Given: a streaming request
@@ -260,10 +248,6 @@ class StreamingTokenForwardingPropertyTest {
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
         VectorStoreClient mockVectorStoreClient = mock(VectorStoreClient.class);
         
-        OllamaConfig ollamaConfig = new OllamaConfig(
-                "localhost", 11434, model, "nomic-embed-text", "qwen3-vl:8b",
-                Duration.ofSeconds(30), Duration.ofSeconds(120)
-        );
         
         RagConfig ragConfig = new RagConfig(
                 5, 0.7, "\n\n---\n\n",
@@ -277,10 +261,10 @@ class StreamingTokenForwardingPropertyTest {
         }
         Flux<String> tokenFlux = Flux.fromArray(tokens);
         
-        when(mockOllamaClient.generateStreaming(anyString(), eq(model)))
+        when(mockOllamaClient.generateStreaming(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(tokenFlux));
         
-        when(mockOllamaClient.generateEmbedding(anyString(), anyString()))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(List.of(0.1f, 0.2f, 0.3f)));
         
         when(mockVectorStoreClient.searchSimilar(anyList(), anyInt()))
@@ -288,7 +272,7 @@ class StreamingTokenForwardingPropertyTest {
         
         // Given: QueryHandler
         QueryHandler queryHandler = new QueryHandlerImpl(
-                mockOllamaClient, mockVectorStoreClient, ollamaConfig, ragConfig
+                mockOllamaClient, mockVectorStoreClient, ragConfig
         );
         
         // Given: a streaming request
@@ -329,10 +313,6 @@ class StreamingTokenForwardingPropertyTest {
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
         VectorStoreClient mockVectorStoreClient = mock(VectorStoreClient.class);
         
-        OllamaConfig ollamaConfig = new OllamaConfig(
-                "localhost", 11434, model, "nomic-embed-text", "qwen3-vl:8b",
-                Duration.ofSeconds(30), Duration.ofSeconds(120)
-        );
         
         RagConfig ragConfig = new RagConfig(
                 5, 0.7, "\n\n---\n\n",
@@ -346,10 +326,10 @@ class StreamingTokenForwardingPropertyTest {
         }
         Flux<String> tokenFlux = Flux.fromArray(tokens);
         
-        when(mockOllamaClient.generateStreaming(anyString(), eq(model)))
+        when(mockOllamaClient.generateStreaming(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(tokenFlux));
         
-        when(mockOllamaClient.generateEmbedding(anyString(), anyString()))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(List.of(0.1f, 0.2f, 0.3f)));
         
         when(mockVectorStoreClient.searchSimilar(anyList(), anyInt()))
@@ -357,7 +337,7 @@ class StreamingTokenForwardingPropertyTest {
         
         // Given: QueryHandler
         QueryHandler queryHandler = new QueryHandlerImpl(
-                mockOllamaClient, mockVectorStoreClient, ollamaConfig, ragConfig
+                mockOllamaClient, mockVectorStoreClient, ragConfig
         );
         
         // Given: a streaming request
@@ -410,10 +390,6 @@ class StreamingTokenForwardingPropertyTest {
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
         VectorStoreClient mockVectorStoreClient = mock(VectorStoreClient.class);
         
-        OllamaConfig ollamaConfig = new OllamaConfig(
-                "localhost", 11434, model, "nomic-embed-text", "qwen3-vl:8b",
-                Duration.ofSeconds(30), Duration.ofSeconds(120)
-        );
         
         RagConfig ragConfig = new RagConfig(
                 5, 0.7, "\n\n---\n\n",
@@ -427,10 +403,10 @@ class StreamingTokenForwardingPropertyTest {
         }
         Flux<String> tokenFlux = Flux.fromArray(tokens);
         
-        when(mockOllamaClient.generateStreaming(anyString(), eq(model)))
+        when(mockOllamaClient.generateStreaming(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(tokenFlux));
         
-        when(mockOllamaClient.generateEmbedding(anyString(), anyString()))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(List.of(0.1f, 0.2f, 0.3f)));
         
         when(mockVectorStoreClient.searchSimilar(anyList(), anyInt()))
@@ -438,7 +414,7 @@ class StreamingTokenForwardingPropertyTest {
         
         // Given: QueryHandler
         QueryHandler queryHandler = new QueryHandlerImpl(
-                mockOllamaClient, mockVectorStoreClient, ollamaConfig, ragConfig
+                mockOllamaClient, mockVectorStoreClient, ragConfig
         );
         
         // Given: a streaming request
@@ -486,10 +462,6 @@ class StreamingTokenForwardingPropertyTest {
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
         VectorStoreClient mockVectorStoreClient = mock(VectorStoreClient.class);
         
-        OllamaConfig ollamaConfig = new OllamaConfig(
-                "localhost", 11434, model, "nomic-embed-text", "qwen3-vl:8b",
-                Duration.ofSeconds(30), Duration.ofSeconds(120)
-        );
         
         RagConfig ragConfig = new RagConfig(
                 5, 0.7, "\n\n---\n\n",
@@ -499,10 +471,10 @@ class StreamingTokenForwardingPropertyTest {
         // Given: Ollama returns an empty stream
         Flux<String> emptyTokenFlux = Flux.empty();
         
-        when(mockOllamaClient.generateStreaming(anyString(), eq(model)))
+        when(mockOllamaClient.generateStreaming(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(emptyTokenFlux));
         
-        when(mockOllamaClient.generateEmbedding(anyString(), anyString()))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(List.of(0.1f, 0.2f, 0.3f)));
         
         when(mockVectorStoreClient.searchSimilar(anyList(), anyInt()))
@@ -510,7 +482,7 @@ class StreamingTokenForwardingPropertyTest {
         
         // Given: QueryHandler
         QueryHandler queryHandler = new QueryHandlerImpl(
-                mockOllamaClient, mockVectorStoreClient, ollamaConfig, ragConfig
+                mockOllamaClient, mockVectorStoreClient, ragConfig
         );
         
         // Given: a streaming request
@@ -550,10 +522,6 @@ class StreamingTokenForwardingPropertyTest {
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
         VectorStoreClient mockVectorStoreClient = mock(VectorStoreClient.class);
         
-        OllamaConfig ollamaConfig = new OllamaConfig(
-                "localhost", 11434, model, "nomic-embed-text", "qwen3-vl:8b",
-                Duration.ofSeconds(30), Duration.ofSeconds(120)
-        );
         
         RagConfig ragConfig = new RagConfig(
                 5, 0.7, "\n\n---\n\n",
@@ -567,10 +535,10 @@ class StreamingTokenForwardingPropertyTest {
         }
         Flux<String> tokenFlux = Flux.fromArray(tokens);
         
-        when(mockOllamaClient.generateStreaming(anyString(), eq(model)))
+        when(mockOllamaClient.generateStreaming(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(tokenFlux));
         
-        when(mockOllamaClient.generateEmbedding(anyString(), anyString()))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(List.of(0.1f, 0.2f, 0.3f)));
         
         when(mockVectorStoreClient.searchSimilar(anyList(), anyInt()))
@@ -578,7 +546,7 @@ class StreamingTokenForwardingPropertyTest {
         
         // Given: QueryHandler
         QueryHandler queryHandler = new QueryHandlerImpl(
-                mockOllamaClient, mockVectorStoreClient, ollamaConfig, ragConfig
+                mockOllamaClient, mockVectorStoreClient, ragConfig
         );
         
         // Given: a streaming request

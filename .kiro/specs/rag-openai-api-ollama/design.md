@@ -809,8 +809,8 @@ spring:
 ollama:
   host: 127.0.0.1
   port: 11434
-  model-name: llama3.2
-  embedding-model-name: nomic-embed-text
+  model-name: gpt-oss:20b
+  embedding-model-name: qwen3-embedding:8b
   vision-model-name: qwen3-vl:8b
   connection-timeout: 30s
   read-timeout: 120s

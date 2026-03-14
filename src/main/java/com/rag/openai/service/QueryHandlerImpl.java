@@ -2,7 +2,6 @@ package com.rag.openai.service;
 
 import com.rag.openai.client.ollama.OllamaClient;
 import com.rag.openai.client.qdrant.VectorStoreClient;
-import com.rag.openai.config.OllamaConfig;
 import com.rag.openai.config.RagConfig;
 import com.rag.openai.domain.dto.*;
 import com.rag.openai.domain.model.ScoredChunk;
@@ -29,18 +28,15 @@ public class QueryHandlerImpl implements QueryHandler {
     
     private final OllamaClient ollamaClient;
     private final VectorStoreClient vectorStoreClient;
-    private final OllamaConfig ollamaConfig;
     private final RagConfig ragConfig;
     
     public QueryHandlerImpl(
         OllamaClient ollamaClient,
         VectorStoreClient vectorStoreClient,
-        OllamaConfig ollamaConfig,
         RagConfig ragConfig
     ) {
         this.ollamaClient = ollamaClient;
         this.vectorStoreClient = vectorStoreClient;
-        this.ollamaConfig = ollamaConfig;
         this.ragConfig = ragConfig;
     }
     
@@ -55,7 +51,7 @@ public class QueryHandlerImpl implements QueryHandler {
             .thenCompose(this::generateQueryEmbedding)
             .thenCompose(this::searchSimilarChunks)
             .thenCompose(chunks -> augmentPrompt(extractUserPrompt(request).join(), chunks))
-            .thenCompose(augmentedPrompt -> generateResponse(augmentedPrompt, request.model()))
+            .thenCompose(augmentedPrompt -> generateResponse(augmentedPrompt))
             .thenApply(responseText -> formatResponse(
                 completionId,
                 createdTimestamp,
@@ -79,7 +75,7 @@ public class QueryHandlerImpl implements QueryHandler {
             .thenCompose(this::generateQueryEmbedding)
             .thenCompose(this::searchSimilarChunks)
             .thenCompose(chunks -> augmentPrompt(extractUserPrompt(request).join(), chunks))
-            .thenCompose(augmentedPrompt -> generateStreamingResponse(augmentedPrompt, request.model()))
+            .thenCompose(augmentedPrompt -> generateStreamingResponse(augmentedPrompt))
             .thenApply(tokenFlux -> formatStreamingResponse(
                 completionId,
                 createdTimestamp,
@@ -113,7 +109,7 @@ public class QueryHandlerImpl implements QueryHandler {
      */
     private CompletableFuture<List<Float>> generateQueryEmbedding(String query) {
         logger.debug("Generating embedding for query");
-        return ollamaClient.generateEmbedding(query, ollamaConfig.embeddingModelName());
+        return ollamaClient.generateEmbedding(query);
     }
     
     /**
@@ -167,17 +163,17 @@ public class QueryHandlerImpl implements QueryHandler {
     /**
      * Generate a response from Ollama using the augmented prompt.
      */
-    private CompletableFuture<String> generateResponse(String prompt, String modelName) {
+    private CompletableFuture<String> generateResponse(String prompt) {
         logger.debug("Generating response from Ollama");
-        return ollamaClient.generate(prompt, modelName);
+        return ollamaClient.generate(prompt);
     }
     
     /**
      * Generate a streaming response from Ollama using the augmented prompt.
      */
-    private CompletableFuture<Flux<String>> generateStreamingResponse(String prompt, String modelName) {
+    private CompletableFuture<Flux<String>> generateStreamingResponse(String prompt) {
         logger.debug("Generating streaming response from Ollama");
-        return ollamaClient.generateStreaming(prompt, modelName);
+        return ollamaClient.generateStreaming(prompt);
     }
     
     /**

@@ -2,7 +2,7 @@ package com.rag.openai.service;
 
 import com.rag.openai.client.ollama.OllamaClient;
 import com.rag.openai.client.qdrant.VectorStoreClient;
-import com.rag.openai.config.OllamaConfig;
+
 import com.rag.openai.config.RagConfig;
 import com.rag.openai.domain.dto.ChatCompletionRequest;
 import com.rag.openai.domain.dto.Message;
@@ -14,7 +14,6 @@ import net.jqwik.api.constraints.*;
 import org.mockito.ArgumentCaptor;
 
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -67,20 +66,18 @@ class PromptAugmentationStructurePropertyTest {
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
         VectorStoreClient mockVectorStoreClient = mock(VectorStoreClient.class);
         
-        when(mockOllamaClient.generateEmbedding(anyString(), anyString()))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(embeddingVector));
         when(mockVectorStoreClient.searchSimilar(anyList(), anyInt()))
                 .thenReturn(CompletableFuture.completedFuture(scoredChunks));
-        when(mockOllamaClient.generate(anyString(), anyString()))
+        when(mockOllamaClient.generate(anyString()))
                 .thenReturn(CompletableFuture.completedFuture("response"));
         
-        OllamaConfig ollamaConfig = createOllamaConfig(modelName, embeddingModelName);
         RagConfig ragConfig = createRagConfig();
         
         QueryHandler queryHandler = new QueryHandlerImpl(
                 mockOllamaClient,
                 mockVectorStoreClient,
-                ollamaConfig,
                 ragConfig
         );
         
@@ -89,7 +86,7 @@ class PromptAugmentationStructurePropertyTest {
         
         // Then: augmented prompt should contain all chunk texts
         ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockOllamaClient).generate(promptCaptor.capture(), anyString());
+        verify(mockOllamaClient).generate(promptCaptor.capture());
         
         String augmentedPrompt = promptCaptor.getValue();
         for (ScoredChunk chunk : scoredChunks) {
@@ -123,20 +120,18 @@ class PromptAugmentationStructurePropertyTest {
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
         VectorStoreClient mockVectorStoreClient = mock(VectorStoreClient.class);
         
-        when(mockOllamaClient.generateEmbedding(anyString(), anyString()))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(embeddingVector));
         when(mockVectorStoreClient.searchSimilar(anyList(), anyInt()))
                 .thenReturn(CompletableFuture.completedFuture(scoredChunks));
-        when(mockOllamaClient.generate(anyString(), anyString()))
+        when(mockOllamaClient.generate(anyString()))
                 .thenReturn(CompletableFuture.completedFuture("response"));
         
-        OllamaConfig ollamaConfig = createOllamaConfig(modelName, embeddingModelName);
         RagConfig ragConfig = createRagConfigWithSeparator(separator);
         
         QueryHandler queryHandler = new QueryHandlerImpl(
                 mockOllamaClient,
                 mockVectorStoreClient,
-                ollamaConfig,
                 ragConfig
         );
         
@@ -145,7 +140,7 @@ class PromptAugmentationStructurePropertyTest {
         
         // Then: augmented prompt should use the configured separator between chunks
         ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockOllamaClient).generate(promptCaptor.capture(), anyString());
+        verify(mockOllamaClient).generate(promptCaptor.capture());
         
         String augmentedPrompt = promptCaptor.getValue();
         // Should contain separator between chunks (at least chunkCount - 1 times)
@@ -178,20 +173,18 @@ class PromptAugmentationStructurePropertyTest {
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
         VectorStoreClient mockVectorStoreClient = mock(VectorStoreClient.class);
         
-        when(mockOllamaClient.generateEmbedding(anyString(), anyString()))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(embeddingVector));
         when(mockVectorStoreClient.searchSimilar(anyList(), anyInt()))
                 .thenReturn(CompletableFuture.completedFuture(scoredChunks));
-        when(mockOllamaClient.generate(anyString(), anyString()))
+        when(mockOllamaClient.generate(anyString()))
                 .thenReturn(CompletableFuture.completedFuture("response"));
         
-        OllamaConfig ollamaConfig = createOllamaConfig(modelName, embeddingModelName);
         RagConfig ragConfig = createRagConfig();
         
         QueryHandler queryHandler = new QueryHandlerImpl(
                 mockOllamaClient,
                 mockVectorStoreClient,
-                ollamaConfig,
                 ragConfig
         );
         
@@ -200,7 +193,7 @@ class PromptAugmentationStructurePropertyTest {
         
         // Then: augmented prompt should contain both context and question sections
         ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockOllamaClient).generate(promptCaptor.capture(), anyString());
+        verify(mockOllamaClient).generate(promptCaptor.capture());
         
         String augmentedPrompt = promptCaptor.getValue();
         // Template is: "Use the following context...\n\nContext:\n{context}\n\nQuestion: {question}"
@@ -234,20 +227,18 @@ class PromptAugmentationStructurePropertyTest {
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
         VectorStoreClient mockVectorStoreClient = mock(VectorStoreClient.class);
         
-        when(mockOllamaClient.generateEmbedding(anyString(), anyString()))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(embeddingVector));
         when(mockVectorStoreClient.searchSimilar(anyList(), anyInt()))
                 .thenReturn(CompletableFuture.completedFuture(scoredChunks));
-        when(mockOllamaClient.generate(anyString(), anyString()))
+        when(mockOllamaClient.generate(anyString()))
                 .thenReturn(CompletableFuture.completedFuture("response"));
         
-        OllamaConfig ollamaConfig = createOllamaConfig(modelName, embeddingModelName);
         RagConfig ragConfig = createRagConfig();
         
         QueryHandler queryHandler = new QueryHandlerImpl(
                 mockOllamaClient,
                 mockVectorStoreClient,
-                ollamaConfig,
                 ragConfig
         );
         
@@ -256,7 +247,7 @@ class PromptAugmentationStructurePropertyTest {
         
         // Then: context section should appear before question section
         ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockOllamaClient).generate(promptCaptor.capture(), anyString());
+        verify(mockOllamaClient).generate(promptCaptor.capture());
         
         String augmentedPrompt = promptCaptor.getValue();
         int contextIndex = augmentedPrompt.indexOf("Context:");
@@ -288,20 +279,18 @@ class PromptAugmentationStructurePropertyTest {
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
         VectorStoreClient mockVectorStoreClient = mock(VectorStoreClient.class);
         
-        when(mockOllamaClient.generateEmbedding(anyString(), anyString()))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(embeddingVector));
         when(mockVectorStoreClient.searchSimilar(anyList(), anyInt()))
                 .thenReturn(CompletableFuture.completedFuture(List.of()));
-        when(mockOllamaClient.generate(anyString(), anyString()))
+        when(mockOllamaClient.generate(anyString()))
                 .thenReturn(CompletableFuture.completedFuture("response"));
         
-        OllamaConfig ollamaConfig = createOllamaConfig(modelName, embeddingModelName);
         RagConfig ragConfig = createRagConfig();
         
         QueryHandler queryHandler = new QueryHandlerImpl(
                 mockOllamaClient,
                 mockVectorStoreClient,
-                ollamaConfig,
                 ragConfig
         );
         
@@ -310,7 +299,7 @@ class PromptAugmentationStructurePropertyTest {
         
         // Then: should use original prompt without augmentation
         ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockOllamaClient).generate(promptCaptor.capture(), anyString());
+        verify(mockOllamaClient).generate(promptCaptor.capture());
         
         String sentPrompt = promptCaptor.getValue();
         assertThat(sentPrompt).isEqualTo(userPrompt);
@@ -341,20 +330,18 @@ class PromptAugmentationStructurePropertyTest {
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
         VectorStoreClient mockVectorStoreClient = mock(VectorStoreClient.class);
         
-        when(mockOllamaClient.generateEmbedding(anyString(), anyString()))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(embeddingVector));
         when(mockVectorStoreClient.searchSimilar(anyList(), anyInt()))
                 .thenReturn(CompletableFuture.completedFuture(lowScoreChunks));
-        when(mockOllamaClient.generate(anyString(), anyString()))
+        when(mockOllamaClient.generate(anyString()))
                 .thenReturn(CompletableFuture.completedFuture("response"));
         
-        OllamaConfig ollamaConfig = createOllamaConfig(modelName, embeddingModelName);
         RagConfig ragConfig = createRagConfig();
         
         QueryHandler queryHandler = new QueryHandlerImpl(
                 mockOllamaClient,
                 mockVectorStoreClient,
-                ollamaConfig,
                 ragConfig
         );
         
@@ -363,7 +350,7 @@ class PromptAugmentationStructurePropertyTest {
         
         // Then: should use original prompt since chunks are below threshold
         ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockOllamaClient).generate(promptCaptor.capture(), anyString());
+        verify(mockOllamaClient).generate(promptCaptor.capture());
         
         String sentPrompt = promptCaptor.getValue();
         assertThat(sentPrompt).isEqualTo(userPrompt);
@@ -401,20 +388,18 @@ class PromptAugmentationStructurePropertyTest {
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
         VectorStoreClient mockVectorStoreClient = mock(VectorStoreClient.class);
         
-        when(mockOllamaClient.generateEmbedding(anyString(), anyString()))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(embeddingVector));
         when(mockVectorStoreClient.searchSimilar(anyList(), anyInt()))
                 .thenReturn(CompletableFuture.completedFuture(List.of(scoredChunk)));
-        when(mockOllamaClient.generate(anyString(), anyString()))
+        when(mockOllamaClient.generate(anyString()))
                 .thenReturn(CompletableFuture.completedFuture("response"));
         
-        OllamaConfig ollamaConfig = createOllamaConfig(modelName, embeddingModelName);
         RagConfig ragConfig = createRagConfig();
         
         QueryHandler queryHandler = new QueryHandlerImpl(
                 mockOllamaClient,
                 mockVectorStoreClient,
-                ollamaConfig,
                 ragConfig
         );
         
@@ -423,7 +408,7 @@ class PromptAugmentationStructurePropertyTest {
         
         // Then: augmented prompt should contain the chunk text and user prompt
         ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockOllamaClient).generate(promptCaptor.capture(), anyString());
+        verify(mockOllamaClient).generate(promptCaptor.capture());
         
         String augmentedPrompt = promptCaptor.getValue();
         assertThat(augmentedPrompt).contains(chunkText);
@@ -455,20 +440,18 @@ class PromptAugmentationStructurePropertyTest {
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
         VectorStoreClient mockVectorStoreClient = mock(VectorStoreClient.class);
         
-        when(mockOllamaClient.generateEmbedding(anyString(), anyString()))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(embeddingVector));
         when(mockVectorStoreClient.searchSimilar(anyList(), anyInt()))
                 .thenReturn(CompletableFuture.completedFuture(scoredChunks));
-        when(mockOllamaClient.generate(anyString(), anyString()))
+        when(mockOllamaClient.generate(anyString()))
                 .thenReturn(CompletableFuture.completedFuture("response"));
         
-        OllamaConfig ollamaConfig = createOllamaConfig(modelName, embeddingModelName);
         RagConfig ragConfig = createRagConfig();
         
         QueryHandler queryHandler = new QueryHandlerImpl(
                 mockOllamaClient,
                 mockVectorStoreClient,
-                ollamaConfig,
                 ragConfig
         );
         
@@ -477,7 +460,7 @@ class PromptAugmentationStructurePropertyTest {
         
         // Then: all chunks should appear before the question section
         ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockOllamaClient).generate(promptCaptor.capture(), anyString());
+        verify(mockOllamaClient).generate(promptCaptor.capture());
         
         String augmentedPrompt = promptCaptor.getValue();
         int questionIndex = augmentedPrompt.indexOf("Question:");
@@ -520,20 +503,18 @@ class PromptAugmentationStructurePropertyTest {
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
         VectorStoreClient mockVectorStoreClient = mock(VectorStoreClient.class);
         
-        when(mockOllamaClient.generateEmbedding(anyString(), anyString()))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(embeddingVector));
         when(mockVectorStoreClient.searchSimilar(anyList(), anyInt()))
                 .thenReturn(CompletableFuture.completedFuture(List.of(scoredChunk)));
-        when(mockOllamaClient.generate(anyString(), anyString()))
+        when(mockOllamaClient.generate(anyString()))
                 .thenReturn(CompletableFuture.completedFuture("response"));
         
-        OllamaConfig ollamaConfig = createOllamaConfig(modelName, embeddingModelName);
         RagConfig ragConfig = createRagConfig();
         
         QueryHandler queryHandler = new QueryHandlerImpl(
                 mockOllamaClient,
                 mockVectorStoreClient,
-                ollamaConfig,
                 ragConfig
         );
         
@@ -542,7 +523,7 @@ class PromptAugmentationStructurePropertyTest {
         
         // Then: special characters should be preserved in augmented prompt
         ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockOllamaClient).generate(promptCaptor.capture(), anyString());
+        verify(mockOllamaClient).generate(promptCaptor.capture());
         
         String augmentedPrompt = promptCaptor.getValue();
         assertThat(augmentedPrompt).contains(chunkText);
@@ -574,20 +555,18 @@ class PromptAugmentationStructurePropertyTest {
         OllamaClient mockOllamaClient = mock(OllamaClient.class);
         VectorStoreClient mockVectorStoreClient = mock(VectorStoreClient.class);
         
-        when(mockOllamaClient.generateEmbedding(anyString(), anyString()))
+        when(mockOllamaClient.generateEmbedding(anyString()))
                 .thenReturn(CompletableFuture.completedFuture(embeddingVector));
         when(mockVectorStoreClient.searchSimilar(anyList(), anyInt()))
                 .thenReturn(CompletableFuture.completedFuture(scoredChunks));
-        when(mockOllamaClient.generate(anyString(), anyString()))
+        when(mockOllamaClient.generate(anyString()))
                 .thenReturn(CompletableFuture.completedFuture("response"));
         
-        OllamaConfig ollamaConfig = createOllamaConfig(modelName, embeddingModelName);
         RagConfig ragConfig = createRagConfigWithTemplate(customTemplate);
         
         QueryHandler queryHandler = new QueryHandlerImpl(
                 mockOllamaClient,
                 mockVectorStoreClient,
-                ollamaConfig,
                 ragConfig
         );
         
@@ -596,7 +575,7 @@ class PromptAugmentationStructurePropertyTest {
         
         // Then: augmented prompt should use custom template markers
         ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockOllamaClient).generate(promptCaptor.capture(), anyString());
+        verify(mockOllamaClient).generate(promptCaptor.capture());
         
         String augmentedPrompt = promptCaptor.getValue();
         assertThat(augmentedPrompt).contains("CONTEXT:");
@@ -605,17 +584,6 @@ class PromptAugmentationStructurePropertyTest {
 
     // ==================== Helper Methods ====================
 
-    private OllamaConfig createOllamaConfig(String modelName, String embeddingModelName) {
-        return new OllamaConfig(
-                "localhost",
-                11434,
-                modelName,
-                embeddingModelName,
-                "qwen3-vl:8b",
-                Duration.ofSeconds(30),
-                Duration.ofSeconds(120)
-        );
-    }
 
     private RagConfig createRagConfig() {
         return new RagConfig(
@@ -692,7 +660,7 @@ class PromptAugmentationStructurePropertyTest {
     @Provide
     Arbitrary<String> modelName() {
         return Arbitraries.of(
-                "llama3.2",
+                "gpt-oss:20b",
                 "llama3.2:1b",
                 "llama3.2:3b",
                 "mistral",
@@ -706,7 +674,7 @@ class PromptAugmentationStructurePropertyTest {
     @Provide
     Arbitrary<String> embeddingModelName() {
         return Arbitraries.of(
-                "nomic-embed-text",
+                "qwen3-embedding:8b",
                 "mxbai-embed-large",
                 "all-minilm",
                 "snowflake-arctic-embed"
