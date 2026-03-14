@@ -164,6 +164,18 @@ rag:
     Use the following context to answer the question...
 ```
 
+### OpenAI API Configuration
+
+Controls the model metadata returned by the OpenAI-compatible `GET /v1/models` endpoint. All three properties are required at startup (`model-name` and `owned-by` must not be null).
+
+```yaml
+openai:
+  api:
+    model-name: local              # Model identifier returned by /v1/models
+    creation-date: 1773532800      # Unix timestamp exposed as the model creation date
+    owned-by: host-machine         # Owner label for the model entry
+```
+
 ### Environment Variable Overrides
 
 All configuration properties can be overridden using environment variables:
@@ -192,6 +204,11 @@ export PROCESSING_CHUNK_OVERLAP=50
 # RAG
 export RAG_TOP_K_RESULTS=5
 export RAG_SIMILARITY_THRESHOLD=0.7
+
+# OpenAI API
+export OPENAI_API_MODEL_NAME=local
+export OPENAI_API_CREATION_DATE=1773532800
+export OPENAI_API_OWNED_BY=host-machine
 ```
 
 ## Running the Application
@@ -319,12 +336,26 @@ curl -X POST http://localhost:8080/v1/chat/completions \
 ```
 
 #### GET /v1/models
-
-List available models.
+Returns a list of available models.
 
 **Request:**
 ```bash
 curl http://localhost:8080/v1/models
+```
+
+**Response:**
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "local",
+      "object": "model",
+      "created": 1773532800,
+      "owned_by": "host-machine"
+    }
+  ]
+}
 ```
 
 ### Simple Test Endpoint
@@ -687,6 +718,3 @@ ollama pull qwen3-vl:8b
 └── README.md                     # This file
 ```
 
-## License
-
-Copyright © 2024
