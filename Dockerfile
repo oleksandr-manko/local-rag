@@ -13,7 +13,6 @@ COPY gradle/ gradle/
 # Copy build configuration files
 COPY build.gradle .
 COPY settings.gradle .
-COPY org/ org/
 
 # Make gradlew executable
 RUN chmod +x gradlew
