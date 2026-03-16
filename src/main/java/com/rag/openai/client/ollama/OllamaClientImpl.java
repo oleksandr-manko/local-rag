@@ -151,16 +151,18 @@ public class OllamaClientImpl implements OllamaClient {
         // Encode image as base64
         String base64Image = java.util.Base64.getEncoder().encodeToString(imageData);
         
+        // Vision requires /v1/chat/completions with multipart content (text + image_url)
         OllamaVisionRequest request = new OllamaVisionRequest(
             config.visionModelName(),
-            prompt,
-            List.of(base64Image),
-            false,
-            Optional.empty()
+            List.of(new OllamaVisionRequest.VisionMessage("user", List.of(
+                new OllamaVisionRequest.TextContent(prompt),
+                new OllamaVisionRequest.ImageContent(base64Image)
+            ))),
+            false
         );
         
         return webClient.post()
-            .uri("/v1/completions")
+            .uri("/v1/chat/completions")
             .contentType(MediaType.APPLICATION_JSON)
             .bodyValue(request)
             .retrieve()

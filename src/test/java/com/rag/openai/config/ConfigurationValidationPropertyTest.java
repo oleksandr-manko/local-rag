@@ -148,7 +148,6 @@ class ConfigurationValidationPropertyTest {
     void qdrantConfigRejectsNullHost(
             @ForAll @IntRange(min = 1, max = 65535) int port,
             @ForAll @NotBlank @AlphaChars String collectionName,
-            @ForAll @IntRange(min = 1, max = 4096) int vectorDimension,
             @ForAll("durations") Duration connectionTimeout
     ) {
         // Feature: rag-openai-api-ollama, Property 6: Configuration Validation
@@ -158,7 +157,7 @@ class ConfigurationValidationPropertyTest {
         
         // When & Then: creating config should throw NullPointerException
         assertThatThrownBy(() -> new QdrantConfig(
-                host, port, collectionName, vectorDimension, connectionTimeout
+                host, port, collectionName, connectionTimeout
         ))
                 .isInstanceOf(NullPointerException.class)
                 .hasMessageContaining("Qdrant host must not be null");
@@ -169,7 +168,6 @@ class ConfigurationValidationPropertyTest {
     void qdrantConfigRejectsNullCollectionName(
             @ForAll @NotBlank @AlphaChars String host,
             @ForAll @IntRange(min = 1, max = 65535) int port,
-            @ForAll @IntRange(min = 1, max = 4096) int vectorDimension,
             @ForAll("durations") Duration connectionTimeout
     ) {
         // Feature: rag-openai-api-ollama, Property 6: Configuration Validation
@@ -179,7 +177,7 @@ class ConfigurationValidationPropertyTest {
         
         // When & Then: creating config should throw NullPointerException
         assertThatThrownBy(() -> new QdrantConfig(
-                host, port, collectionName, vectorDimension, connectionTimeout
+                host, port, collectionName, connectionTimeout
         ))
                 .isInstanceOf(NullPointerException.class)
                 .hasMessageContaining("Collection name must not be null");
@@ -191,7 +189,6 @@ class ConfigurationValidationPropertyTest {
             @ForAll @NotBlank @AlphaChars String host,
             @ForAll("invalidPorts") int port,
             @ForAll @NotBlank @AlphaChars String collectionName,
-            @ForAll @IntRange(min = 1, max = 4096) int vectorDimension,
             @ForAll("durations") Duration connectionTimeout
     ) {
         // Feature: rag-openai-api-ollama, Property 6: Configuration Validation
@@ -200,31 +197,10 @@ class ConfigurationValidationPropertyTest {
         
         // When & Then: creating config should throw IllegalArgumentException
         assertThatThrownBy(() -> new QdrantConfig(
-                host, port, collectionName, vectorDimension, connectionTimeout
+                host, port, collectionName, connectionTimeout
         ))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Invalid port");
-    }
-
-    @Property(tries = 100)
-    @Label("When QdrantConfig has invalid vector dimension Then throws IllegalArgumentException")
-    void qdrantConfigRejectsInvalidVectorDimension(
-            @ForAll @NotBlank @AlphaChars String host,
-            @ForAll @IntRange(min = 1, max = 65535) int port,
-            @ForAll @NotBlank @AlphaChars String collectionName,
-            @ForAll @IntRange(min = -1000, max = 0) int vectorDimension,
-            @ForAll("durations") Duration connectionTimeout
-    ) {
-        // Feature: rag-openai-api-ollama, Property 6: Configuration Validation
-        
-        // Given: invalid vector dimension (non-positive)
-        
-        // When & Then: creating config should throw IllegalArgumentException
-        assertThatThrownBy(() -> new QdrantConfig(
-                host, port, collectionName, vectorDimension, connectionTimeout
-        ))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Vector dimension must be positive");
     }
 
     @Property(tries = 100)
@@ -233,7 +209,6 @@ class ConfigurationValidationPropertyTest {
             @ForAll @NotBlank @AlphaChars String host,
             @ForAll @IntRange(min = 1, max = 65535) int port,
             @ForAll @NotBlank @AlphaChars String collectionName,
-            @ForAll @IntRange(min = 1, max = 4096) int vectorDimension,
             @ForAll("durations") Duration connectionTimeout
     ) {
         // Feature: rag-openai-api-ollama, Property 6: Configuration Validation
@@ -242,14 +217,13 @@ class ConfigurationValidationPropertyTest {
         
         // When: creating config
         var config = new QdrantConfig(
-                host, port, collectionName, vectorDimension, connectionTimeout
+                host, port, collectionName, connectionTimeout
         );
         
         // Then: config is created successfully with correct values
         assertThat(config.host()).isEqualTo(host);
         assertThat(config.port()).isEqualTo(port);
         assertThat(config.collectionName()).isEqualTo(collectionName);
-        assertThat(config.vectorDimension()).isEqualTo(vectorDimension);
         assertThat(config.connectionTimeout()).isEqualTo(connectionTimeout);
     }
 

@@ -562,4 +562,135 @@ class OllamaClientTest {
         List<Float> embedding = result.get();
         assertThat(embedding).isEmpty();
     }
+
+    @Test
+    @DisplayName("When analyzing image with valid request Then response is parsed correctly from OpenAI format")
+    void testAnalyzeImageSuccess() throws Exception {
+        // Given: A successful response in OpenAI chat completions format
+        String responseJson = """
+            {
+                "id": "chatcmpl-img-123",
+                "object": "chat.completion",
+                "created": 1715634521,
+                "model": "qwen3-vl:8b",
+                "choices": [
+                    {
+                        "index": 0,
+                        "message": {
+                            "role": "assistant",
+                            "content": "Extracted text from the image."
+                        },
+                        "finish_reason": "stop"
+                    }
+                ],
+                "usage": {
+                    "prompt_tokens": 50,
+                    "completion_tokens": 6,
+                    "total_tokens": 56
+                }
+            }
+            """;
+
+        mockServer.enqueue(new MockResponse()
+            .setBody(responseJson)
+            .setHeader("Content-Type", "application/json"));
+
+        // When: Analyzing an image
+        byte[] imageData = new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47}; // PNG header
+        CompletableFuture<String> result = ollamaClient.analyzeImage(imageData, "Extract all visible text");
+
+        // Then: The response text is parsed correctly
+        assertThat(result).isNotNull();
+        String response = result.get();
+        assertThat(response).isEqualTo("Extracted text from the image.");
+
+        // Verify request format uses /v1/chat/completions with messages containing image content
+        RecordedRequest request = mockServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).isEqualTo("/v1/chat/completions");
+        assertThat(request.getHeader("Content-Type")).contains("application/json");
+
+        String requestBody = request.getBody().readUtf8();
+        assertThat(requestBody).contains("\"model\":\"qwen3-vl:8b\"");
+        assertThat(requestBody).contains("\"role\":\"user\"");
+        assertThat(requestBody).contains("\"type\":\"text\"");
+        assertThat(requestBody).contains("\"type\":\"image_url\"");
+        assertThat(requestBody).contains("data:image/png;base64,");
+    }
+
+    @Test
+    @DisplayName("When analyzing image with empty choices Then empty string is returned")
+    void testAnalyzeImageEmptyChoices() throws Exception {
+        // Given: A response with empty choices
+        String responseJson = """
+            {
+                "id": "chatcmpl-img-empty",
+                "object": "chat.completion",
+                "created": 1715634521,
+                "model": "qwen3-vl:8b",
+                "choices": [],
+                "usage": {
+                    "prompt_tokens": 50,
+                    "completion_tokens": 0,
+                    "total_tokens": 50
+                }
+            }
+            """;
+
+        mockServer.enqueue(new MockResponse()
+            .setBody(responseJson)
+            .setHeader("Content-Type", "application/json"));
+
+        // When: Analyzing an image
+        byte[] imageData = new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47};
+        CompletableFuture<String> result = ollamaClient.analyzeImage(imageData, "Extract text");
+
+        // Then: Empty string is returned
+        assertThat(result).isNotNull();
+        String response = result.get();
+        assertThat(response).isEmpty();
+    }
+
+    @Test
+    @DisplayName("When image analysis server returns error Then ServiceUnavailableException is thrown")
+    void testAnalyzeImageServerError() {
+        // Given: A server error response
+        mockServer.enqueue(new MockResponse()
+            .setResponseCode(500)
+            .setBody("Internal Server Error"));
+
+        // When: Analyzing an image
+        byte[] imageData = new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47};
+        CompletableFuture<String> result = ollamaClient.analyzeImage(imageData, "Extract text");
+
+        // Then: ServiceUnavailableException is thrown
+        assertThat(result).isNotNull();
+        assertThatThrownBy(() -> result.get())
+            .isInstanceOf(ExecutionException.class)
+            .hasCauseInstanceOf(ServiceUnavailableException.class)
+            .hasMessageContaining("Ollama server returned error: 500");
+    }
+
+    @Test
+    @DisplayName("When image analysis times out Then ServiceTimeoutException is thrown")
+    void testAnalyzeImageTimeout() {
+        // Given: A server that delays response beyond timeout
+        String responseJson = """
+            {"id":"chatcmpl-timeout","object":"chat.completion","created":1715634521,"model":"qwen3-vl:8b","choices":[{"index":0,"message":{"role":"assistant","content":"Late"},"finish_reason":"stop"}],"usage":{"prompt_tokens":2,"completion_tokens":1,"total_tokens":3}}
+            """;
+        mockServer.enqueue(new MockResponse()
+            .setBody(responseJson)
+            .setBodyDelay(3, java.util.concurrent.TimeUnit.SECONDS));
+
+        // When: Analyzing an image with short timeout
+        byte[] imageData = new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47};
+        CompletableFuture<String> result = ollamaClient.analyzeImage(imageData, "Extract text");
+
+        // Then: ServiceTimeoutException is thrown
+        assertThat(result).isNotNull();
+        assertThatThrownBy(() -> result.get(5, java.util.concurrent.TimeUnit.SECONDS))
+            .isInstanceOf(ExecutionException.class)
+            .hasCauseInstanceOf(ServiceTimeoutException.class)
+            .hasMessageContaining("Ollama request timed out");
+    }
 }

@@ -3,6 +3,9 @@ server:
   shutdown: graceful
 
 spring:
+  mvc:
+    async:
+      request-timeout: 120s
   application:
     name: rag-openai-api-ollama
   lifecycle:
@@ -30,7 +33,6 @@ qdrant:
   host: localhost
   port: 6334
   collection-name: documents
-  vector-dimension: 768
   connection-timeout: 10s
 
 # Redis Configuration

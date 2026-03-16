@@ -10,7 +10,6 @@ public record QdrantConfig(
     String host,
     int port,
     String collectionName,
-    int vectorDimension,
     Duration connectionTimeout
 ) {
     public QdrantConfig {
@@ -18,9 +17,6 @@ public record QdrantConfig(
         Objects.requireNonNull(collectionName, "Collection name must not be null");
         if (port <= 0 || port > 65535) {
             throw new IllegalArgumentException("Invalid port: " + port);
-        }
-        if (vectorDimension <= 0) {
-            throw new IllegalArgumentException("Vector dimension must be positive");
         }
     }
 }

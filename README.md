@@ -4,6 +4,7 @@ Retrieval-Augmented Generation (RAG) application that provides OpenAI-compatible
 
 ## Table of Contents
 
+- [Architecture Sequence Diagrams](#architecture-sequence-diagrams)
 - [Prerequisites](#prerequisites)
 - [Quick Start](#quick-start)
 - [Building the Project](#building-the-project)
@@ -14,6 +15,241 @@ Retrieval-Augmented Generation (RAG) application that provides OpenAI-compatible
 - [Health Checks](#health-checks)
 - [Troubleshooting](#troubleshooting)
 - [Technology Stack](#technology-stack)
+
+## Architecture Sequence Diagrams
+
+### 1. Query Flow — OpenWebUI → RAG App → Ollama & Qdrant (Non-Streaming)
+
+Shows how an external client (e.g. Open WebUI) sends a chat completion request and receives a RAG-augmented response.
+
+```mermaid
+sequenceDiagram
+    participant Client as Open WebUI
+    participant API as OpenAIApiController<br/>POST /v1/chat/completions
+    participant QH as QueryHandler
+    participant OC as OllamaClient<br/>(WebClient HTTP)
+    participant Ollama as Ollama Server<br/>127.0.0.1:11434
+    participant VSC as VectorStoreClient<br/>(gRPC)
+    participant Qdrant as Qdrant DB<br/>localhost:6334
+
+    Client->>API: POST /v1/chat/completions<br/>{model, messages, stream: false}
+    API->>API: validateRequest(model, messages)
+    API->>QH: handleQuery(request)
+    QH->>QH: extractUserPrompt(request)
+
+    Note over QH,Qdrant: Step 1 — Generate query embedding
+    QH->>VSC: generateQueryEmbedding(prompt)
+    VSC->>OC: generateEmbedding(text)
+    OC->>Ollama: POST /v1/embeddings<br/>{model: "qwen3-embedding:8b", input: text}
+    Ollama-->>OC: embedding vector (dim 768)
+    OC-->>VSC: List<Float> embedding
+    
+    Note over QH,Qdrant: Step 2 — Search similar chunks
+    VSC->>Qdrant: searchAsync (gRPC)<br/>collection: "documents", top_k: 5
+    Qdrant-->>VSC: ScoredPoint[] results
+    VSC-->>QH: List<ScoredChunk> (filtered by threshold ≥ 0.6)
+
+    Note over QH,Ollama: Step 3 — Augment prompt & generate response
+    QH->>QH: augmentPrompt(original, chunks)<br/>using rag.prompt-template
+    QH->>OC: generate(augmentedPrompt)
+    OC->>Ollama: POST /v1/completions<br/>{model: "gpt-oss:20b", prompt, stream: false}
+    Ollama-->>OC: OllamaGenerateResponse
+    OC-->>QH: response text
+
+    QH->>QH: formatResponse → ChatCompletionResponse
+    QH-->>API: ChatCompletionResponse
+    API-->>Client: 200 OK (application/json)<br/>OpenAI-compatible response
+```
+
+### 2. Query Flow — Streaming Mode (SSE)
+
+Shows the streaming variant where tokens are forwarded as Server-Sent Events.
+
+```mermaid
+sequenceDiagram
+    participant Client as Open WebUI
+    participant API as OpenAIApiController
+    participant QH as QueryHandler
+    participant OC as OllamaClient
+    participant Ollama as Ollama Server<br/>127.0.0.1:11434
+    participant VSC as VectorStoreClient
+    participant Qdrant as Qdrant DB<br/>localhost:6334
+
+    Client->>API: POST /v1/chat/completions<br/>{stream: true}
+    API->>QH: handleStreamingQuery(request)
+    QH->>QH: extractUserPrompt(request)
+
+    QH->>VSC: generateQueryEmbedding(prompt)
+    VSC->>OC: generateEmbedding(text)
+    OC->>Ollama: POST /v1/embeddings<br/>{model: "qwen3-embedding:8b"}
+    Ollama-->>OC: embedding vector
+    OC-->>VSC: List<Float>
+
+    VSC->>Qdrant: searchAsync (gRPC, top_k: 5)
+    Qdrant-->>VSC: ScoredPoint[] results
+    VSC-->>QH: List<ScoredChunk>
+
+    QH->>QH: augmentPrompt(original, chunks)
+    QH->>OC: generateStreaming(augmentedPrompt)
+    OC->>Ollama: POST /v1/completions<br/>{model: "gpt-oss:20b", stream: true}
+
+    loop Token-by-token (Flux<SSE>)
+        Ollama-->>OC: SSE: {response: "token"}
+        OC-->>QH: token string
+        QH-->>API: ChatCompletionChunk
+        API-->>Client: SSE: data: {chunk}
+    end
+
+    API-->>Client: SSE: [DONE]
+```
+
+### 3. Document Processing Flow — Scheduled / On-Demand
+
+Shows how documents (PDFs and images) are ingested, chunked, embedded, and stored.
+
+```mermaid
+sequenceDiagram
+    participant Trigger as Cron Scheduler<br/>or POST /api/processing/trigger
+    participant PJ as ProcessingJob
+    participant DP as DocumentProcessor
+    participant RC as RedisClient<br/>(Lettuce async)
+    participant Redis as Redis<br/>localhost:6379
+    participant CS as ChunkingService
+    participant OC as OllamaClient
+    participant Ollama as Ollama Server<br/>127.0.0.1:11434
+    participant VSC as VectorStoreClient
+    participant Qdrant as Qdrant DB<br/>localhost:6334
+
+    Trigger->>PJ: executeScheduledProcessing()<br/>or triggerProcessing()
+    PJ->>PJ: AtomicBoolean CAS (prevent concurrent runs)
+    PJ->>DP: processDocuments(./documents)
+    DP->>DP: scanFolder → List<Path><br/>(pdf, jpg, jpeg, png, tiff)
+
+    loop For each supported file
+        DP->>DP: computeFileHash (SHA-256)
+        DP->>RC: getFileHash(filePath)
+        RC->>Redis: HGET rag:file_hashes <path>
+        Redis-->>RC: stored hash or null
+        RC-->>DP: Optional<String>
+
+        alt Hash matches (file unchanged)
+            DP->>DP: skip file (increment skippedCount)
+        else Hash differs or new file
+            alt Image file (jpg/jpeg/png/tiff)
+                DP->>OC: analyzeImage(bytes, extractionPrompt)
+                OC->>Ollama: POST /v1/completions<br/>{model: "qwen3-vl:8b", images: [base64]}
+                Ollama-->>OC: extracted text
+                OC-->>DP: text content
+            else PDF file
+                DP->>DP: PDFBox extractText(file)
+            end
+
+            DP->>VSC: deleteEmbeddingsByFilename(filename)
+            VSC->>Qdrant: Delete points (gRPC)<br/>filter: filename match
+            Qdrant-->>VSC: confirmed
+
+            DP->>CS: chunkText(text, metadata, 512, 50)
+            CS-->>DP: List<TextChunk>
+
+            loop For each chunk (batch up to 100)
+                DP->>OC: generateEmbedding(chunk.text)
+                OC->>Ollama: POST /v1/embeddings<br/>{model: "qwen3-embedding:8b"}
+                Ollama-->>OC: embedding vector (dim 768)
+                OC-->>DP: List<Float>
+            end
+
+            DP->>VSC: storeEmbeddings(records)
+            VSC->>Qdrant: Upsert points (gRPC)<br/>collection: "documents"
+            Qdrant-->>VSC: confirmed
+
+            DP->>RC: storeFileHash(filePath, newHash)
+            RC->>Redis: HSET rag:file_hashes <path> <hash>
+            Redis-->>RC: OK
+        end
+    end
+
+    DP-->>PJ: ProcessingResult<br/>{processed, skipped, chunks, embeddings, timeMs, errors}
+    PJ-->>Trigger: result
+```
+
+### 4. Health Check Flow
+
+Shows how the actuator health endpoint verifies connectivity to all external services.
+
+```mermaid
+sequenceDiagram
+    participant Client as Monitoring Client
+    participant Actuator as GET /actuator/health
+    participant OH as OllamaHealthIndicator
+    participant Ollama as Ollama Server<br/>127.0.0.1:11434
+    participant QH as QdrantHealthIndicator
+    participant Qdrant as Qdrant DB<br/>localhost:6334
+    participant RH as RedisHealthIndicator
+    participant Redis as Redis<br/>localhost:6379
+    participant PH as ProcessingJobHealthIndicator
+
+    Client->>Actuator: GET /actuator/health
+    
+    par Ollama health check
+        Actuator->>OH: health()
+        OH->>Ollama: GET /v1/models<br/>(timeout: 120s)
+        Ollama-->>OH: 200 OK
+        OH-->>Actuator: UP {host, port}
+    and Qdrant health check
+        Actuator->>QH: health()
+        QH->>Qdrant: healthCheck (gRPC)
+        Qdrant-->>QH: healthy
+        QH-->>Actuator: UP {host, port}
+    and Redis health check
+        Actuator->>RH: health()
+        RH->>Redis: PING
+        Redis-->>RH: PONG
+        RH-->>Actuator: UP {host, port}
+    and Processing job check
+        Actuator->>PH: health()
+        PH-->>Actuator: UP {status: idle/running}
+    end
+
+    Actuator-->>Client: 200 OK<br/>{status: UP, components: {...}}
+```
+
+### 5. Test API Flow — Simple Plain-Text Query
+
+Shows the simplified test endpoint that wraps the same RAG pipeline.
+
+```mermaid
+sequenceDiagram
+    participant Dev as Developer / curl
+    participant API as TestApiController<br/>POST /api/test/query
+    participant QH as QueryHandler
+    participant OC as OllamaClient
+    participant Ollama as Ollama Server<br/>127.0.0.1:11434
+    participant VSC as VectorStoreClient
+    participant Qdrant as Qdrant DB<br/>localhost:6334
+
+    Dev->>API: POST /api/test/query<br/>Content-Type: text/plain<br/>"What is in the documents?"
+    API->>API: validate prompt (non-empty)
+    API->>API: wrap in ChatCompletionRequest
+    API->>QH: handleQuery(request)
+
+    QH->>OC: generateEmbedding(prompt)
+    OC->>Ollama: POST /v1/embeddings
+    Ollama-->>OC: embedding
+    QH->>VSC: searchSimilar(embedding, 5)
+    VSC->>Qdrant: searchAsync (gRPC)
+    Qdrant-->>VSC: scored chunks
+    VSC-->>QH: List<ScoredChunk>
+
+    QH->>QH: augmentPrompt
+    QH->>OC: generate(augmentedPrompt)
+    OC->>Ollama: POST /v1/completions<br/>{model: "gpt-oss:20b"}
+    Ollama-->>OC: response text
+    OC-->>QH: text
+
+    QH-->>API: ChatCompletionResponse
+    API->>API: extractPlainTextResponse
+    API-->>Dev: 200 OK (text/plain)<br/>"Based on the context..."
+```
 
 ## Prerequisites
 
@@ -121,7 +357,6 @@ qdrant:
   host: localhost               # Qdrant server host
   port: 6334                    # Qdrant gRPC port
   collection-name: documents    # Collection name for embeddings
-  vector-dimension: 768         # Embedding vector dimension
   connection-timeout: 10s       # Connection timeout
 ```
 

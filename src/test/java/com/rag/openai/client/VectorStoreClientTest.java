@@ -57,7 +57,6 @@ class VectorStoreClientTest {
             "localhost",
             6334,
             "test-collection",
-            768,
             Duration.ofSeconds(10)
         );
         
